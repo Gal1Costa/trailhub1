@@ -1,0 +1,140 @@
+/* Shared Tooltip Styles for Create Page Components */
+
+/* Info icon wrapper - container for the info icon */
+.info-icon-wrapper,
+.tooltip-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  outline: none;
+}
+
+.info-icon-wrapper {
+  margin-bottom: 0.5rem;
+}
+
+.tooltip-trigger {
+  cursor: help;
+}
+
+/* Info icon styling */
+.info-icon {
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+
+.info-icon-wrapper:hover .info-icon,
+.info-icon-wrapper:focus .info-icon,
+.tooltip-trigger:hover .info-icon,
+.tooltip-trigger:focus .info-icon {
+  color: #10b981;
+}
+
+/* Tooltip container - appears below the icon */
+.info-tooltip,
+.tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 0.5rem;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* Tooltip content box */
+.tooltip-content {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  min-width: 240px;
+  max-width: 280px;
+  font-size: 0.800rem;
+  color: #4b5563;
+  line-height: 1.6;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+/* Tooltip title (for structured content) */
+.tooltip-content .tooltip-title {
+  font-weight: 600;
+  font-size: 0.800rem;
+  color: #111827;
+  margin: 0 0 0.75rem 0;
+}
+
+/* Tooltip list (for structured content) */
+.tooltip-content .tooltip-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.800rem;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.tooltip-content .tooltip-list li {
+  margin-bottom: 0.5rem;
+  padding-left: 1.25rem;
+  position: relative;
+}
+
+.tooltip-content .tooltip-list li:before {
+  content: "•";
+  position: absolute;
+  left: 0.5rem;
+  color: #10b981;
+  font-weight: bold;
+}
+
+.tooltip-content .tooltip-list li:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .info-tooltip,
+  .tooltip {
+    left: 0;
+    transform: none;
+    right: 0;
+  }
+  
+  .tooltip-content {
+    min-width: auto;
+    max-width: 100%;
+  }
+}
+
+/* Position variants */
+.info-icon-wrapper-top-right,
+.tooltip-trigger-top-right {
+  margin-left: auto;
+}
+
+.info-tooltip-top-right,
+.tooltip-top-right {
+  right: 0;
+  left: auto;
+  transform: none;
+}
+
+.tooltip-trigger-top-right .info-tooltip,
+.tooltip-trigger-top-right .tooltip {
+  right: 0;
+  left: auto;
+  transform: none;
+}
+
+/* Label with tooltip wrapper */
+.label-with-tooltip {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}

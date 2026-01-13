@@ -1,0 +1,10 @@
+.hike-details-page {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  min-height: 100vh;
+}
+
+.hike-details-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}

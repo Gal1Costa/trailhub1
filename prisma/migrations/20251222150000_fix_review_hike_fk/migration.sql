@@ -1,18 +1,27 @@
 -- Make Review.hikeId nullable and change FK to ON DELETE SET NULL
+-- Guarded so it can run even if older migrations haven't added hikeId yet.
 
--- First, allow NULL values in the hikeId column
-ALTER TABLE "Review"
-ALTER COLUMN "hikeId" DROP NOT NULL;
+DO $$
+BEGIN
+  -- Only run if column exists
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'Review'
+      AND column_name = 'hikeId'
+  ) THEN
+    -- Allow NULLs
+    EXECUTE 'ALTER TABLE "Review" ALTER COLUMN "hikeId" DROP NOT NULL';
 
--- Drop the existing foreign key constraint that uses ON DELETE RESTRICT
-ALTER TABLE "Review"
-DROP CONSTRAINT IF EXISTS "Review_hikeId_fkey";
+    -- Drop existing FK if present
+    EXECUTE 'ALTER TABLE "Review" DROP CONSTRAINT IF EXISTS "Review_hikeId_fkey"';
 
--- Recreate the foreign key with ON DELETE SET NULL so reviews remain
--- when a hike is deleted, and only their hikeId is cleared.
-ALTER TABLE "Review"
-ADD CONSTRAINT "Review_hikeId_fkey"
-FOREIGN KEY ("hikeId") REFERENCES "Hike"("id")
-ON DELETE SET NULL
-ON UPDATE CASCADE;
+    -- Recreate FK with ON DELETE SET NULL
+    EXECUTE 'ALTER TABLE "Review"
+      ADD CONSTRAINT "Review_hikeId_fkey"
+      FOREIGN KEY ("hikeId") REFERENCES "Hike"("id")
+      ON DELETE SET NULL
+      ON UPDATE CASCADE';
+  END IF;
+END $$;
 

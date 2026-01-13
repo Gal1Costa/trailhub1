@@ -1,89 +1,120 @@
 .create-hike-page {
-  padding: 24px 0 80px 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  padding: 3rem 2rem;
 }
 
-.panel {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+.create-hike-container {
+  max-width: 900px;
+  margin: 0 auto;
 }
 
-.panel h3 {
-  margin: 0 0 12px 0;
-  font-size: 16px;
+.create-hike-header {
+  margin-bottom: 2rem;
 }
 
-.grid-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  align-items: start;
+.create-hike-header h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #111827;
 }
 
-label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #333; }
-input[type="text"], input[type="date"], input[type="time"], input[type="number"], select, textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  margin-top: 6px;
-  box-sizing: border-box;
+.create-hike-header p {
+  margin-top: 0.5rem;
+  font-size: 1.125rem;
+  color: #6b7280;
 }
 
-textarea { resize: vertical; }
-
-.map-placeholder {
-  height: 160px;
-  border: 1px dashed #e2e8f0;
-  border-radius: 8px;
-  display:flex;align-items:center;justify-content:center;flex-direction:column;color:#666;
-}
-
-.file-drop input[type="file"]{ display:none; }
-.file-drop { display:block; padding:16px; border:1px dashed #e6eef0; border-radius:8px; text-align:center; cursor:pointer; }
-
-.cover-placeholder { height: 160px; border:1px dashed #e6eef0; border-radius:8px; display:flex; align-items:center; justify-content:center; }
-
-.btn-primary { background:#2f855a;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer }
-.btn-cancel { background:transparent;border:1px solid #e5e7eb;padding:8px 14px;border-radius:8px;cursor:pointer }
-
-.alert-error { background:#fff3f2;border:1px solid #ffd2cf;padding:10px;border-radius:8px;color:#9b2c2c;margin-bottom:12px }
-
-/* Field Error Styling */
-.field-error {
-  color: #dc2626;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-.field-error-container {
+.form-sections {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
 }
 
-label input.has-error,
-label select.has-error,
-label textarea.has-error {
-  border-color: #dc2626;
-  background-color: #fef2f2;
+.section-card {
+  background: white;
+  border: 1px solid #f3f4f6;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-label input.has-error:focus,
-label select.has-error:focus,
-label textarea.has-error:focus {
-  outline: none;
-  border-color: #dc2626;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 1.5rem;
 }
 
-.section-error {
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 6px;
-  padding: 8px 12px;
-  margin-bottom: 12px;
-  color: #991b1b;
-  font-size: 13px;
+.action-buttons {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.create-hike-page .btn-cancel {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #374151;
+  background: white;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.create-hike-page .btn-cancel:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.create-hike-page .btn-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.create-hike-page .btn-cancel:disabled:hover {
+  background: white;
+}
+
+.create-hike-page .btn-primary {
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  background: #10b981;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.create-hike-page .btn-primary:hover:not(:disabled) {
+  background: #047857;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.create-hike-page .btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.create-hike-page .btn-primary:disabled:hover {
+  background: #10b981;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.create-hike-page .alert-error {
+  background: #fff3f2;
+  border: 1px solid #ffd2cf;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #9b2c2c;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
 }

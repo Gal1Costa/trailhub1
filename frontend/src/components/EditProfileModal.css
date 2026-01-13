@@ -131,8 +131,14 @@
 .form-actions {
   display: flex;
   gap: 12px;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 24px;
+}
+
+.form-actions-right {
+  display: flex;
+  gap: 12px;
 }
 
 .btn-cancel {
@@ -174,6 +180,27 @@
 }
 
 .btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-delete-account {
+  background: #dc2626;
+  border: none;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-delete-account:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.btn-delete-account:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

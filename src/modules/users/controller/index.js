@@ -6,6 +6,8 @@ const usersRepo = require('../repository');
 const { prisma } = require('../../../shared/prisma');
 
 const router = Router();
+const { deleteUserByUid } = require('../../../adapters/firebase.auth');
+const { recordAudit } = require('../../administration/audit');
 
 // GET /api/users/me - return current user's profile (allows visitor access)
 router.get('/me', async (req, res, next) => {
@@ -35,6 +37,15 @@ router.post('/register', async (req, res, next) => {
     if (!firebaseUid || !email) {
       console.error('[users/register] Missing required fields:', { firebaseUid: !!firebaseUid, email: !!email });
       return res.status(400).json({ error: 'firebaseUid and email are required' });
+    }
+
+    // SECURITY: Block admin UIDs from registration (single source of truth)
+    const { isAdmin } = require('../../../utils/admin');
+    if (isAdmin(firebaseUid)) {
+      return res.status(403).json({ 
+        error: 'AdminUidBlocked',
+        message: 'This account is registered as an administrator and cannot be registered through this endpoint.'
+      });
     }
 
     // Validate role
@@ -146,7 +157,9 @@ router.get('/:id', requireRole(['hiker','guide','admin']), async (req, res, next
       bookings,
     };
 
-    const isAdmin = requester && requester.role === 'admin';
+    // Admin check: use isAdmin utility (single source of truth)
+    const { isAdmin: checkIsAdmin } = require('../../../utils/admin');
+    const isAdmin = requester && checkIsAdmin(requester.firebaseUid);
     const isOwner = requester && requester.firebaseUid && requester.firebaseUid === user.firebaseUid;
 
     // Hide sensitive fields for non-owners (e.g. email, firebaseUid)
@@ -160,6 +173,17 @@ router.get('/:id', requireRole(['hiker','guide','admin']), async (req, res, next
     console.error('[users/:id] Error fetching user by id:', err);
     next(err);
   }
+});
+
+// Export the router after all routes are defined
+
+// DELETE /api/users/me - forwarded to /api/me (use soft-delete there)
+// To avoid duplicate hard-delete logic we forward clients to the canonical
+// endpoint `/api/me`. This returns a 307 so clients that honor redirects
+// will repeat the DELETE against `/api/me`. Frontend should call `/api/me`.
+router.delete('/me', requireRole(['hiker','guide','admin']), async (req, res) => {
+  // Return a redirect to the canonical endpoint which performs soft-delete
+  return res.redirect(307, '/api/me');
 });
 
 module.exports = router;

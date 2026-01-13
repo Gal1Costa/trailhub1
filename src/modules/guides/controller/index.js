@@ -51,6 +51,7 @@ router.get('/:id', requireRole(['visitor','hiker','guide','admin']), async (req,
 
     const guideResponse = {
       ...guide,
+      id: guide.id, // Explicitly ensure id is present
       averageRating: parseFloat(averageRating),
       totalReviews: reviews.length,
       completedHikesCount: hikes.length,
@@ -65,6 +66,7 @@ router.get('/:id', requireRole(['visitor','hiker','guide','admin']), async (req,
       bookings: bookings, // Include joined hikes (bookings)
     };
 
+    console.log('[guides/get] Returning guide response with id:', guideResponse.id);
     res.status(200).json(guideResponse);
   } catch (err) {
     console.error('[guides/get] Error:', err);

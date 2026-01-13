@@ -1,0 +1,61 @@
+.search-bar {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 16px;
+  padding-left: 48px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  background: white;
+  color: #111827;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  line-height: 1.5;
+  height: 44px;
+}
+
+/* Ensure search input doesn't inherit filter-input styles */
+.search-bar .search-input,
+.search-input-wrapper .search-input {
+  padding-left: 48px;
+}
+
+.search-input:hover {
+  background-color: #f9fafb;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #10b981, 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* More specific selector to prevent filter-input styles from overriding */
+.search-bar .search-input:focus {
+  box-shadow: 0 0 0 2px #10b981, 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.search-input::placeholder {
+  color: #9ca3af;
+}

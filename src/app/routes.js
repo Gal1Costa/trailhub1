@@ -11,11 +11,24 @@ router.use('/api/reviews', require('../modules/reviews/controller'));
 router.use('/api/admin', require('../modules/administration/controller'));
 router.use('/api/admin/analytics', require('../modules/analytics/controller'));
 router.use('/api/identity', require('../modules/identity/controller'));
+// mount /api/me controller for self-operations
+router.use('/api/me', require('../modules/me/controller'));
+// mount /api/auth for auth-related endpoints
+router.use('/api/auth', require('../modules/auth/controller'));
+
+// Mount dev-only routes (only in development)
+if (process.env.NODE_ENV === 'development') {
+  try {
+    router.use('/api/dev', require('../modules/dev/controller'));
+  } catch (e) {
+    console.warn('Dev routes not available:', e.message || e);
+  }
+}
 
 // other module routers can be mounted similarly when ready
 // e.g. router.use('/api/bookings', require('../modules/bookings/controller'));
 
-// Backwards-compatible profile endpoints used by frontend
+// Backwards-compatible profile endpoint (legacy - /api/me is now handled by me controller)
 const usersRepo = require('../modules/users/repository');
 
 async function handleProfile(req, res, next) {
@@ -32,7 +45,7 @@ async function handleProfile(req, res, next) {
   }
 }
 
-router.get('/api/me', handleProfile);
+// Legacy /api/profile endpoint (kept for backwards compatibility)
 router.get('/api/profile', handleProfile);
 
 module.exports = router;

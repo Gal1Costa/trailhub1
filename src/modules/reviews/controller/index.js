@@ -31,9 +31,25 @@ router.post('/', requireRole(['hiker','guide','admin']), async (req, res, next) 
     // Verify hike is in the past
     const hike = await hikesRepo.getHikeById(String(hikeId));
     if (!hike) return res.status(404).json({ error: 'Hike not found' });
+    
+    // Check if hike is in the past by combining date and meetingTime (matching frontend logic)
     const hikeDate = hike.date || hike.createdAt || null;
-    if (hikeDate && new Date(hikeDate) >= new Date()) {
-      return res.status(400).json({ error: 'You can only review hikes after they have occurred' });
+    if (hikeDate) {
+      const hikeDateObj = new Date(hikeDate);
+      
+      // If meetingTime exists, combine it with the date
+      if (hike.meetingTime) {
+        const [hours, minutes] = hike.meetingTime.split(':').map(Number);
+        hikeDateObj.setHours(hours, minutes, 0, 0);
+      } else {
+        // If no time specified, set to end of day so hike is considered upcoming until end of day
+        hikeDateObj.setHours(23, 59, 59, 999);
+      }
+      
+      // Check if hike time has passed
+      if (hikeDateObj >= new Date()) {
+        return res.status(400).json({ error: 'You can only review hikes after they have occurred' });
+      }
     }
 
     // Prevent duplicate review by same user for this hike
@@ -61,10 +77,13 @@ router.post('/', requireRole(['hiker','guide','admin']), async (req, res, next) 
 router.get('/guide/:id', requireRole(['visitor','hiker','guide','admin']), async (req, res, next) => {
   try {
     const { id } = req.params;
+    console.log('[reviews/guide] Fetching reviews for guideId:', id);
     const rows = await reviewsRepo.listReviews({ guideId: id });
-    res.status(200).json(rows);
+    console.log('[reviews/guide] Found', rows?.length || 0, 'reviews');
+    res.status(200).json(rows || []);
   } catch (err) {
-    console.error('[reviews/guide] Error listing reviews', err);
+    console.error('[reviews/guide] Error listing reviews:', err.message);
+    console.error('[reviews/guide] Error stack:', err.stack);
     next(err);
   }
 });

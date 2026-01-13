@@ -1,0 +1,203 @@
+/* Trail Details Component Styles - Scoped to avoid conflicts */
+@import './Tooltip.css';
+
+.trail-details-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.trail-details-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.trail-details-container .distance-duration-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .trail-details-container .distance-duration-row {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.trail-details-container .field-error-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.trail-details-container .field-error-container label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.input-icon-optional {
+  color: #10b981;
+}
+
+.input-base {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #111827;
+  background: white;
+  box-sizing: border-box;
+  transition: all 150ms;
+}
+
+.input-with-icon {
+  padding-left: 40px;
+}
+
+.duration-input.bg-gray-50 {
+  background-color: #f9fafb;
+}
+
+.duration-help-text {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.textarea-base {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #111827;
+  background: white;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+  resize: none;
+  min-height: 120px;
+}
+
+.trail-details-container .field-error-container input.input-base:focus,
+.trail-details-container .field-error-container textarea.textarea-base:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #10b981;
+  transition: all 150ms;
+}
+
+.trail-details-container .field-error-container input.input-base.has-error,
+.trail-details-container .field-error-container textarea.textarea-base.has-error {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.trail-details-container .field-error-container input.input-base.has-error:focus,
+.trail-details-container .field-error-container textarea.textarea-base.has-error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+.trail-details-container .field-error {
+  color: #dc2626;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.trail-details-container .elevation-field {
+  margin-top: 0;
+}
+
+/* Label with reset button (still used for checkbox layout) */
+.label-with-reset {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+/* Elegant suggestion - minimalist design */
+.elegant-suggestion {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.elegant-suggestion-icon {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  opacity: 0.7;
+}
+
+.elegant-suggestion-text {
+  color: #6b7280;
+}
+
+/* Inline checkbox for multi-day (compact, aligned right) */
+.label-right-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inline-checkbox-input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #10b981;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* Days input wrapper */
+.days-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.days-unit {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Tooltip label wrapper */
+.label-with-tooltip {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}

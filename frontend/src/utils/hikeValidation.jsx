@@ -17,6 +17,37 @@ function validateFutureDate(dateString) {
 }
 
 /**
+ * Validates date and time together to ensure they're not in the past
+ */
+function validateFutureDateTime(dateString, timeString) {
+  // First check if date is valid and not in past
+  const dateError = validateFutureDate(dateString);
+  if (dateError) return dateError;
+
+  // If time is provided and date is today, check if time is in the past
+  if (timeString && dateString) {
+    const selectedDate = new Date(dateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    // If selected date is today, validate the time is not in the past
+    if (selectedDate.getTime() === today.getTime()) {
+      const [hours, minutes] = timeString.split(':').map(Number);
+      const selectedDateTime = new Date();
+      selectedDateTime.setHours(hours, minutes, 0, 0);
+
+      const now = new Date();
+      if (selectedDateTime < now) {
+        return 'Meeting time cannot be in the past';
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
  * Validates a positive number
  */
 function validatePositiveNumber(value, fieldName, isRequired = false) {
@@ -77,6 +108,12 @@ export function validateHikeForm(formData) {
   
   if (!basic.meetingTime || basic.meetingTime.trim() === '') {
     basicErrors.meetingTime = 'Meeting time is required';
+  } else {
+    // Validate that the date and time together are not in the past
+    const dateTimeError = validateFutureDateTime(basic.date, basic.meetingTime);
+    if (dateTimeError) {
+      basicErrors.meetingTime = dateTimeError;
+    }
   }
   
   if (!basic.meetingPlace || basic.meetingPlace.trim() === '') {
@@ -87,17 +124,21 @@ export function validateHikeForm(formData) {
     basicErrors.meetingPlace = 'Meeting place must be less than 500 characters';
   }
   
-  if (!basic.difficulty || basic.difficulty === '') {
-    basicErrors.difficulty = 'Difficulty level is required';
-  } else if (!['EASY', 'MODERATE', 'HARD'].includes(basic.difficulty)) {
+  // Default to EASY if not provided
+  const difficulty = basic.difficulty || 'EASY';
+  
+  if (difficulty && difficulty !== '' && !['EASY', 'MODERATE', 'HARD'].includes(difficulty)) {
     basicErrors.difficulty = 'Please select a valid difficulty level';
   }
   
-  // Capacity validation (optional, can be 0, but must be valid if provided)
-  if (basic.capacity !== undefined && basic.capacity !== null && basic.capacity !== '') {
+  
+  // Capacity validation (REQUIRED, must be 1 or greater)
+  if (basic.capacity === undefined || basic.capacity === null || basic.capacity === '') {
+    basicErrors.capacity = 'Capacity is required';
+  } else {
     const capacity = Number(basic.capacity);
-    if (isNaN(capacity) || capacity < 0) {
-      basicErrors.capacity = 'Capacity must be 0 or greater';
+    if (isNaN(capacity) || capacity < 1) {
+      basicErrors.capacity = 'Capacity must be at least 1';
     } else if (capacity > 500) {
       basicErrors.capacity = 'Capacity must be less than 500';
     }
@@ -132,35 +173,65 @@ export function validateHikeForm(formData) {
   // Trail Details Validation
   const trailErrors = {};
   
-  if (trail.distance && trail.distance.trim() !== '') {
-    // Distance can have units (e.g., "8.5 km"), but should start with a number
-    const distanceMatch = trail.distance.trim().match(/^(\d+\.?\d*)\s*(km|m|miles|mi)?$/i);
-    if (!distanceMatch) {
-      trailErrors.distance = 'Distance format invalid (e.g., "8.5 km" or "8500 m")';
+  // Distance validation - accepts numbers (from number input) or empty
+  if (trail.distance !== undefined && trail.distance !== null && trail.distance !== '') {
+    const distanceNum = typeof trail.distance === 'number' ? trail.distance : Number(trail.distance);
+    if (isNaN(distanceNum) || distanceNum < 0) {
+      trailErrors.distance = 'Distance must be a positive number';
+    } else if (distanceNum > 1000) {
+      trailErrors.distance = 'Distance must be less than 1000 km';
     }
   }
   
-  // Duration validation: should be in format like "4-5 hours", "3 hours", "2-3 hrs", etc.
-  if (trail.duration && trail.duration.trim() !== '') {
-    const duration = trail.duration.trim();
-    if (duration.length > 50) {
-      trailErrors.duration = 'Duration must be less than 50 characters';
+  // Duration validation - depends on multi-day status
+  const isMultiDay = trail.isMultiDay === true || basic.isMultiDay === true;
+  
+  if (isMultiDay) {
+    // Multi-day: validate durationDays
+    if (!trail.durationDays || trail.durationDays === '') {
+      trailErrors.durationDays = 'Number of days is required for multi-day hikes';
     } else {
-      // Valid formats: "4 hours", "4-5 hours", "2-3 hrs", "1.5 hours", "30 minutes", etc.
-      // Allow numbers, hyphens, spaces, and common time units
-      const durationPattern = /^(\d+\.?\d*)\s*-\s*(\d+\.?\d*)?\s*(hours?|hrs?|minutes?|mins?|h|m)$/i;
-      const simplePattern = /^(\d+\.?\d*)\s*(hours?|hrs?|minutes?|mins?|h|m)$/i;
-      if (!durationPattern.test(duration) && !simplePattern.test(duration)) {
-        trailErrors.duration = 'Duration format invalid. Examples: "4-5 hours", "3 hours", "2 hrs", "30 minutes"';
+      const daysNum = typeof trail.durationDays === 'number' ? trail.durationDays : Number(trail.durationDays);
+      if (isNaN(daysNum) || !Number.isInteger(daysNum)) {
+        trailErrors.durationDays = 'Number of days must be a whole number';
+      } else if (daysNum < 2) {
+        trailErrors.durationDays = 'Multi-day hikes must be at least 2 days';
+      } else if (daysNum > 14) {
+        trailErrors.durationDays = 'Multi-day hikes cannot exceed 14 days';
+      }
+    }
+  } else {
+    // Single-day: validate durationHours
+    const durationHours = trail.durationHours !== undefined ? trail.durationHours : trail.duration;
+    if (durationHours !== undefined && durationHours !== null && durationHours !== '') {
+      // Handle both numeric and string formats (e.g., "4-5 hours", "4 hours")
+      let hoursNum = null;
+      
+      if (typeof durationHours === 'number') {
+        hoursNum = durationHours;
+      } else {
+        // Extract the first number from string like "4-5 hours" or "4 hours"
+        const match = String(durationHours).match(/^(\d+(?:\.\d+)?)/);
+        if (match) {
+          hoursNum = parseFloat(match[1]);
+        }
+      }
+      
+      if (hoursNum === null || isNaN(hoursNum) || hoursNum < 0) {
+        trailErrors.durationHours = 'Duration must be a positive number';
+      } else if (hoursNum > 24) {
+        trailErrors.durationHours = 'Duration must be less than 24 hours for single-day hikes';
       }
     }
   }
   
-  if (trail.elevationGain && trail.elevationGain.trim() !== '') {
-    // Elevation can have units (e.g., "1200 m"), but should start with a number
-    const elevationMatch = trail.elevationGain.trim().match(/^(\d+\.?\d*)\s*(m|meters|ft|feet)?$/i);
-    if (!elevationMatch) {
-      trailErrors.elevationGain = 'Elevation gain format invalid (e.g., "1200 m" or "4000 ft")';
+  // Elevation gain validation - accepts numbers (from number input) or empty
+  if (trail.elevationGain !== undefined && trail.elevationGain !== null && trail.elevationGain !== '') {
+    const elevationNum = typeof trail.elevationGain === 'number' ? trail.elevationGain : Number(trail.elevationGain);
+    if (isNaN(elevationNum) || elevationNum < 0) {
+      trailErrors.elevationGain = 'Elevation gain must be a positive number';
+    } else if (elevationNum > 10000) {
+      trailErrors.elevationGain = 'Elevation gain must be less than 10000 meters';
     }
   }
   
@@ -172,15 +243,32 @@ export function validateHikeForm(formData) {
     errors.trail = trailErrors;
   }
 
-  // Map Route Validation
-  const hasRoutePoints = route.points?.length > 0;
-  const hasLocation = route.location?.lat && route.location?.lng;
-  if (!hasRoutePoints || !hasLocation) {
-    errors.route = {
-    points: !hasRoutePoints ? 'Please add at least one point on the map' : undefined,
-    location: !hasLocation ? 'Please click to set hike location' : undefined
-    };
- }
+  // Map Route Validation - mode-specific
+  const mapMode = route.mapMode || 'simple';
+  const hasRoutePoints = Array.isArray(route.points) && route.points.length > 0;
+  const hasDestinations = Array.isArray(route.destinations) && route.destinations.length > 0;
+  const hasLocation = route.location && typeof route.location === 'object' && route.location.lat && route.location.lng;
+  
+  const routeErrors = {};
+  
+  // Validate route data based on mode
+  if (mapMode === 'destinations') {
+    if (!hasDestinations) {
+      routeErrors.points = 'Please add at least one destination on the map';
+    }
+  } else {
+    // Simple mode
+    if (!hasRoutePoints) {
+      routeErrors.points = 'Please add at least one point on the map';
+    }
+  }
+  
+  // Location is required for both modes - but we don't show error message
+  // Location is automatically set when user clicks on map
+  
+  if (Object.keys(routeErrors).length > 0) {
+    errors.route = routeErrors;
+  }
 
   // Cover Image Validation
   const coverErrors = {};
@@ -200,6 +288,47 @@ export function validateHikeForm(formData) {
     isValid: Object.keys(errors).length === 0,
     errors
   };
+}
+
+/**
+ * Validates route data based on map mode
+ */
+function validateRouteForMode(route, mapMode) {
+  const errors = {};
+  
+  if (mapMode === 'destinations') {
+    const hasDestinations = Array.isArray(route.destinations) && route.destinations.length > 0;
+    if (!hasDestinations) {
+      errors.points = 'Please add at least one destination on the map';
+    }
+  } else {
+    // Simple mode
+    const hasRoutePoints = Array.isArray(route.points) && route.points.length > 0;
+    if (!hasRoutePoints) {
+      errors.points = 'Please add at least one point on the map';
+    }
+  }
+  
+  // Location is required for both modes - but we don't show error message
+  // Location is automatically set when user clicks on map
+  
+  return errors;
+}
+
+/**
+ * Checks if route has valid data based on current mode
+ */
+function hasValidRouteData(route) {
+  const mapMode = route.mapMode || 'simple';
+  const hasLocation = route.location && typeof route.location === 'object' && route.location.lat && route.location.lng;
+  
+  if (!hasLocation) return false;
+  
+  if (mapMode === 'destinations') {
+    return Array.isArray(route.destinations) && route.destinations.length > 0;
+  } else {
+    return Array.isArray(route.points) && route.points.length > 0;
+  }
 }
 
 /**
@@ -231,8 +360,9 @@ export function validateField(section, fieldName, value, allFormData = {}) {
           return null;
         
         case 'difficulty':
-          if (!value || value === '') return 'Difficulty level is required';
-          if (!['EASY', 'MODERATE', 'HARD'].includes(value)) {
+          // Default to EASY if not provided, only validate if value exists
+          const difficultyValue = value || 'EASY';
+          if (difficultyValue && difficultyValue !== '' && !['EASY', 'MODERATE', 'HARD'].includes(difficultyValue)) {
             return 'Please select a valid difficulty level';
           }
           return null;
@@ -240,8 +370,8 @@ export function validateField(section, fieldName, value, allFormData = {}) {
         case 'capacity':
           if (value !== undefined && value !== null && value !== '') {
             const capNum = Number(value);
-            if (isNaN(capNum) || capNum < 0) {
-              return 'Capacity must be 0 or greater';
+            if (isNaN(capNum) || capNum < 1) {
+              return 'Capacity must be at least 1';
             }
             if (capNum > 500) {
               return 'Capacity must be less than 500';
@@ -281,31 +411,56 @@ export function validateField(section, fieldName, value, allFormData = {}) {
     case 'trail':
       switch (fieldName) {
         case 'distance':
-          if (value && value.trim() !== '') {
-            const match = value.trim().match(/^(\d+\.?\d*)\s*(km|m|miles|mi)?$/i);
-            if (!match) return 'Distance format invalid (e.g., "8.5 km" or "8500 m")';
+          if (value !== undefined && value !== null && value !== '') {
+            const distanceNum = typeof value === 'number' ? value : Number(value);
+            if (isNaN(distanceNum) || distanceNum < 0) {
+              return 'Distance must be a positive number';
+            }
+            if (distanceNum > 1000) {
+              return 'Distance must be less than 1000 km';
+            }
           }
           return null;
         
         case 'duration':
-          if (value && value.trim() !== '') {
-            const duration = value.trim();
-            if (duration.length > 50) {
-              return 'Duration must be less than 50 characters';
+        case 'durationHours':
+          // Single-day duration validation
+          if (value !== undefined && value !== null && value !== '') {
+            const durationNum = typeof value === 'number' ? value : Number(value);
+            if (isNaN(durationNum) || durationNum < 0) {
+              return 'Duration must be a positive number';
             }
-            // Valid formats: "4 hours", "4-5 hours", "2-3 hrs", "1.5 hours", "30 minutes", etc.
-            const durationPattern = /^(\d+\.?\d*)\s*-\s*(\d+\.?\d*)?\s*(hours?|hrs?|minutes?|mins?|h|m)$/i;
-            const simplePattern = /^(\d+\.?\d*)\s*(hours?|hrs?|minutes?|mins?|h|m)$/i;
-            if (!durationPattern.test(duration) && !simplePattern.test(duration)) {
-              return 'Duration format invalid. Examples: "4-5 hours", "3 hours", "2 hrs", "30 minutes"';
+            if (durationNum > 24) {
+              return 'Duration must be less than 24 hours for single-day hikes';
+            }
+          }
+          return null;
+        
+        case 'durationDays':
+          // Multi-day duration validation
+          if (value !== undefined && value !== null && value !== '') {
+            const daysNum = typeof value === 'number' ? value : Number(value);
+            if (isNaN(daysNum) || !Number.isInteger(daysNum)) {
+              return 'Number of days must be a whole number';
+            }
+            if (daysNum < 2) {
+              return 'Multi-day hikes must be at least 2 days';
+            }
+            if (daysNum > 14) {
+              return 'Multi-day hikes cannot exceed 14 days';
             }
           }
           return null;
         
         case 'elevationGain':
-          if (value && value.trim() !== '') {
-            const match = value.trim().match(/^(\d+\.?\d*)\s*(m|meters|ft|feet)?$/i);
-            if (!match) return 'Elevation gain format invalid (e.g., "1200 m" or "4000 ft")';
+          if (value !== undefined && value !== null && value !== '') {
+            const elevationNum = typeof value === 'number' ? value : Number(value);
+            if (isNaN(elevationNum) || elevationNum < 0) {
+              return 'Elevation gain must be a positive number';
+            }
+            if (elevationNum > 10000) {
+              return 'Elevation gain must be less than 10000 meters';
+            }
           }
           return null;
         
@@ -318,6 +473,11 @@ export function validateField(section, fieldName, value, allFormData = {}) {
         default:
           return null;
       }
+    
+    case 'route':
+      const mapMode = route.mapMode || 'simple';
+      const routeErrors = validateRouteForMode(route, mapMode);
+      return routeErrors[fieldName] || null;
     
     case 'cover':
       if (fieldName === 'coverFile') {

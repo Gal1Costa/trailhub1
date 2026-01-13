@@ -12,6 +12,11 @@ model User {
   email        String        @unique
   name         String?
   role         String
+  // Admin soft delete fields
+  status       UserStatus    @default(ACTIVE)
+  isDeleted    Boolean       @default(false)
+  deletedAt    DateTime?
+  anonymizedAt DateTime?
   createdAt    DateTime      @default(now())
   firebaseUid  String?       @unique
   bookings     Booking[]
@@ -20,8 +25,11 @@ model User {
   reviews      Review[]
 }
 
+
 model Guide {
   id              String    @id @default(uuid())
+  // legacy status — DO NOT remove or rename
+  status          String    @default("ACTIVE")
   userId          String    @unique
   bio             String?
   createdAt       DateTime  @default(now())
@@ -60,11 +68,15 @@ model HikerProfile {
 
 model Hike {
   id            String          @id @default(uuid())
+  // legacy status — DO NOT remove or rename
+  status        String          @default("ACTIVE")
   title         String
   description   String?
   difficulty    DifficultyLevel
   distance      String?
   duration      String?
+  durationDays  Int?
+  isMultiDay    Boolean         @default(false)
   price         Int?
   capacity      Int?
   location      String?
@@ -107,8 +119,25 @@ model Review {
   hike      Hike?     @relation(fields: [hikeId], references: [id], onDelete: SetNull)
 }
 
+model AuditLog {
+  id        String   @id @default(uuid())
+  actorId   String?  // user id who performed the action (nullable for system)
+  actorEmail String?
+  action    String
+  resource  String?
+  resourceId String?
+  details   String?
+  createdAt DateTime @default(now())
+}
+
 enum DifficultyLevel {
   EASY
   MODERATE
   HARD
 }
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+

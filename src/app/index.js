@@ -23,6 +23,7 @@ const routes = require('./routes');                        // All API endpoints
 const { connectPool, getPool } = require('../shared/db');  // Database connection (pg)
 const { logger } = require('../shared/logger');            // Log messages
 const chatGateway = require('../modules/chat/gateway');    // Real-time chat
+const { validateAdminConfig } = require('../utils/admin');  // Validate admin config
 
 // External services (stubs for now - not implemented yet)
 const firebaseAuth = require('../adapters/firebase.auth');       // User login
@@ -121,33 +122,36 @@ async function start(customPort) {
   // 1) Get port number from settings
   const port = Number(customPort || config.port);
 
-  // 2) Try to connect to database (PostgreSQL)
+  // 2) Validate admin configuration
+  validateAdminConfig();
+
+  // 3) Try to connect to database (PostgreSQL)
   const dbPool = await connectPool();
   if (!dbPool) {
     console.warn('Starting without database connection (development mode)');
   }
 
-  // 3) Load external services (not implemented yet)
+  // 4) Load external services (not implemented yet)
   // TODO: Initialize firebase-admin and other SDKs here when implementing
   void firebaseAuth;
   void firebaseStorage;
   void payments;
 
-  // 4) Create the web server with all routes and middleware
+  // 5) Create the web server with all routes and middleware
   const app = createApp();
 
-  // 5) Start HTTP server and real-time chat
+  // 6) Start HTTP server and real-time chat
   server = http.createServer(app);
   io = new Server(server, {
     cors: { origin: '*', methods: ['GET', 'POST', 'PATCH', 'DELETE'] },
   });
   chatGateway.register(io);
 
-  // 6) Start listening for requests
+  // 7) Start listening for requests
   await new Promise((resolve) => server.listen(port, resolve));
   logger.info('TrailHub ready', { port });
 
-  // 7) Return server handles and cleanup function
+  // 8) Return server handles and cleanup function
   async function stop() {
     // Close real-time chat
     if (io) {

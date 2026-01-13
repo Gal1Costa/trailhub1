@@ -9,6 +9,7 @@ import { MapContainer, TileLayer, Polyline, Marker, useMapEvents } from "react-l
 import { createDestinationMarkers, createStartEndMarkers } from "../utils/mapUtils.jsx";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "./HikeDetails.css";
 
 // Fix Leaflet marker icons for bundlers (Vite/Webpack)
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -56,13 +57,24 @@ export default function HikeDetails() {
     setErr("");
     try {
       // Always load hike details
-      const hikeRes = await api.get(`/api/hikes/${id}`);
+      const hikeRes = await api.get(`/hikes/${id}`);
       setHike(hikeRes.data || null);
+      console.log('[HikeDetails] Loaded hike data:', {
+        id: hikeRes.data?.id,
+        title: hikeRes.data?.title,
+        imageUrl: hikeRes.data?.imageUrl?.substring(0, 50) + '...',
+        hasRoute: !!hikeRes.data?.route,
+        routeLength: hikeRes.data?.route?.length,
+        routeData: hikeRes.data?.route,
+        hasDestinations: !!hikeRes.data?.destinations,
+        destinationsLength: hikeRes.data?.destinations?.length,
+        mapMode: hikeRes.data?.mapMode
+      });
 
   // Only load profile/bookings if user is logged in and auth is ready
   if (authReady && user) {
         try {
-          const profileRes = await api.get("/api/me");
+          const profileRes = await api.get("/me");
           const profile = profileRes.data;
           setUserProfile(profile);
           const bookings = profile?.bookings || [];
@@ -71,7 +83,7 @@ export default function HikeDetails() {
 
           // Check if user has already reviewed this hike
           try {
-            const reviewsRes = await api.get('/api/reviews/user/me');
+            const reviewsRes = await api.get('/reviews/user/me');
             const userReviews = reviewsRes.data || [];
             const hasReviewedThisHike = userReviews.some(review => review.hikeId === id);
             setHasReviewed(hasReviewedThisHike);
@@ -110,6 +122,16 @@ export default function HikeDetails() {
 
 
   const joinedSet = useMemo(() => new Set(joinedIds), [joinedIds]);
+  
+  // Check if user participated in this hike (for past hikes, check participants list)
+  const isParticipant = useMemo(() => {
+    if (!user || !hike) return false;
+    // Check if user is in participants list
+    if (hike.participants && Array.isArray(hike.participants)) {
+      return hike.participants.some(p => p.firebaseUid === user.uid || p.email === user.email);
+    }
+    return false;
+  }, [hike, user]);
 
   async function handleJoin() {
     // If user is not logged in, trigger login modal via custom event
@@ -120,7 +142,7 @@ export default function HikeDetails() {
     }
 
     try {
-      await api.post(`/api/hikes/${id}/join`);
+      await api.post(`/hikes/${id}/join`);
       await load();
     } catch (e) {
       console.error("Join failed", e);
@@ -135,7 +157,7 @@ export default function HikeDetails() {
 
   async function handleLeave() {
     try {
-      await api.delete(`/api/hikes/${id}/join`);
+      await api.delete(`/hikes/${id}/join`);
       await load();
     } catch (e) {
       console.error("Leave failed", e);
@@ -150,12 +172,34 @@ export default function HikeDetails() {
   const date = hike.date || hike.createdAt;
   const d = date ? new Date(date) : null;
   const now = new Date();
-  const isPast = d ? d < now : false;
+  
+  // Determine if hike is past by combining date and meetingTime
+  const isPast = (() => {
+    if (!d) return false;
+    
+    const hikeDate = new Date(d);
+    
+    // If meetingTime exists, combine it with the date
+    if (hike.meetingTime) {
+      const [hours, minutes] = hike.meetingTime.split(':').map(Number);
+      hikeDate.setHours(hours, minutes, 0, 0);
+    } else {
+      // If no time specified, set to end of day to keep upcoming
+      hikeDate.setHours(23, 59, 59, 999);
+    }
+    
+    return hikeDate < now;
+  })();
 
   const participantsCount = hike.participantsCount ?? 0;
   const capacity = hike.capacity ?? 0;
+  
+  // Filter out deleted users from participants and get accurate count
+  const activeParticipants = hike.participants ? hike.participants.filter(p => p.name !== 'Deleted User') : [];
+  const activeParticipantsCount = activeParticipants.length;
+  
   const isFull =
-    hike.isFull || (capacity > 0 && participantsCount >= capacity);
+    hike.isFull || (capacity > 0 && activeParticipantsCount >= capacity);
   const isJoined = joinedSet.has(hike.id);
 
   // Check if current user is the creator of this hike
@@ -196,7 +240,7 @@ export default function HikeDetails() {
     if (!window.confirm('Are you sure you want to delete this hike? This cannot be undone.')) return;
     setDeleting(true);
     try {
-      const response = await api.delete(`/api/hikes/${hike.id}`);
+      const response = await api.delete(`/hikes/${hike.id}`);
       // Success - navigate to profile
       navigate('/profile');
     } catch (e) {
@@ -210,16 +254,22 @@ export default function HikeDetails() {
 
 
   return (
-    <div>
-      {/* Image full-width at top, no margins */}
-      {hike.imageUrl && (
-        <div style={{ position: 'relative', marginLeft: -20, marginRight: -20, marginTop: -20 }}>
-          <img src={hike.imageUrl.startsWith('/') ? `${api.defaults.baseURL}${hike.imageUrl}` : hike.imageUrl} alt={hike.title || hike.name} style={{ width: '100%', height: 320, objectFit: 'cover', display: 'block' }} />
-          <button onClick={() => navigate(backLink)} aria-label="Back" style={{ position: 'absolute', left: 12, top: 12, background: '#fff', border: '1px solid rgba(0,0,0,0.06)', padding: 8, borderRadius: 8, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.08)' }}>
-            ←
-          </button>
-        </div>
-      )}
+    <div className="hike-details-page">
+      <div className="hike-details-wrapper">
+        {/* Green background visible with image container shadow */}
+        {hike.imageUrl && (
+          <div style={{ position: 'relative', marginLeft: -20, marginRight: -20, marginTop: 20, borderRadius: 12, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}>
+            <img 
+              src={`${hike.imageUrl.startsWith('/') ? `${api.defaults.baseURL}${hike.imageUrl}` : hike.imageUrl}${hike.imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`}
+              alt={hike.title || hike.name} 
+              style={{ width: '100%', height: 320, objectFit: 'cover', display: 'block' }} 
+              key={hike.imageUrl}
+            />
+            <button onClick={() => navigate(backLink)} aria-label="Back" style={{ position: 'absolute', left: 12, top: 12, background: '#fff', border: '1px solid rgba(0,0,0,0.06)', padding: 8, borderRadius: 8, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.08)' }}>
+              ←
+            </button>
+          </div>
+        )}
 
       {/* Content container with padding */}
       <div style={{ padding: 16 }}>
@@ -242,7 +292,7 @@ export default function HikeDetails() {
                 <span style={{ fontSize: 18 }}>👥</span>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 500 }}>
-                    {participantsCount}{capacity ? ` / ${capacity}` : ''} {isFull ? '(Full)' : ''}
+                    {activeParticipantsCount}{capacity ? ` / ${capacity}` : ''} {isFull ? '(Full)' : ''}
                   </div>
                 </div>
               </div>
@@ -293,6 +343,7 @@ export default function HikeDetails() {
               <h3 style={{ marginTop: 0 }}>Route Map</h3>
               <div style={{ height: 360, width: '100%', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
                 <MapContainer
+                  key={`map-${hike.id}-${JSON.stringify(hike.route)}`}
                   center={
                     hike.mapLocation?.lat && hike.mapLocation?.lng
                       ? [hike.mapLocation.lat, hike.mapLocation.lng]
@@ -304,18 +355,58 @@ export default function HikeDetails() {
                   <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="© OpenStreetMap contributors" />
                   <Polyline positions={hike.route} color="#2d6a4f" weight={4} opacity={0.8} />
                   {createStartEndMarkers(hike.route)}
-                  {createDestinationMarkers(hike.route)}
                 </MapContainer>
               </div>
+              
+              {/* Destinations list if in destinations mode */}
+              {Array.isArray(hike.destinations) && hike.destinations.length > 0 && (
+                <div style={{ marginTop: 16 }}>
+                  <h4 style={{ marginTop: 0, marginBottom: 12, fontSize: 16, color: '#111827' }}>Destinations</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {hike.destinations.map((dest, index) => (
+                      <div 
+                        key={dest.id || index} 
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 12, 
+                          padding: '10px 12px', 
+                          background: '#f9fafb', 
+                          borderRadius: 8,
+                          border: '1px solid #e5e7eb'
+                        }}
+                      >
+                        <div style={{ 
+                          minWidth: 28, 
+                          height: 28, 
+                          borderRadius: '50%', 
+                          background: '#10b981', 
+                          color: 'white', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          fontWeight: 700, 
+                          fontSize: 13 
+                        }}>
+                          {index + 1}
+                        </div>
+                        <div style={{ fontSize: 14, color: '#374151', fontWeight: 500 }}>
+                          {dest.name || `Destination ${index + 1}`}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {/* Participants section after Trail Map & Route */}
-          {hike.participants && hike.participants.length > 0 ? (
+          {activeParticipants.length > 0 ? (
             <div style={{ marginTop: 12 }}>
               <h4 style={{ marginTop: 0 }}>Participants</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginTop: 8 }}>
-                {hike.participants.map((p) => (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8, marginTop: 8 }}>
+                {activeParticipants.map((p) => (
                   <button key={p.id} onClick={() => {
                     // If participant is a guide, open guide profile; otherwise open hiker profile
                     if (p.guideId) {
@@ -337,10 +428,10 @@ export default function HikeDetails() {
               </div>
             </div>
           ) : (
-            participantsCount > 0 && (
+            activeParticipantsCount > 0 && (
               <div style={{ marginTop: 12 }}>
                 <h4 style={{ marginTop: 0 }}>Participants</h4>
-                <div style={{ fontSize: 13, color: '#444' }}><strong>Joined:</strong> {participantsCount}{capacity ? ` / ${capacity}` : ''} {isFull ? '(Full)' : ''}</div>
+                <div style={{ fontSize: 13, color: '#444' }}><strong>Joined:</strong> {activeParticipantsCount}{capacity ? ` / ${capacity}` : ''} {isFull ? '(Full)' : ''}</div>
               </div>
             )
           )}
@@ -351,17 +442,47 @@ export default function HikeDetails() {
 
           {/* Right (sidebar) column */}
           <aside style={{ width: '100%' }}>
-            {/* Join / Unjoin container */}
+            {/* Join / leave container */}
             {isCreator ? (
               <div style={{ marginBottom: 12, padding: 12, borderRadius: 8, background: '#fff', border: '1px solid #e5e7eb', textAlign: 'center', color: '#2d6a4f', fontWeight: 500 }}>
                 You are the creator of this hike
               </div>
             ) : (
               <div style={{ marginBottom: 12, padding: 12, borderRadius: 8, background: '#fff' }}>
-                {isJoined ? (
-                  <button onClick={handleLeave} className="btn-cancel" style={{ background: '#fff', border: '1px solid #e53e3e', color: '#e53e3e', width: '100%', padding: '8px 12px', borderRadius: 8 }}>Unjoin Hike</button>
+                {isPast ? (
+                  <button 
+                    className="btn-cancel"
+                    disabled
+                    title="This hike is in the past"
+                    style={{ 
+                      width: '100%', 
+                      padding: '8px 12px', 
+                      borderRadius: 8,
+                      background: '#f3f4f6',
+                      border: '1px solid #e5e7eb',
+                      color: '#9ca3af',
+                      cursor: 'not-allowed',
+                      opacity: 0.8
+                    }}
+                  >
+                    Hike Completed
+                  </button>
+                ) : isJoined ? (
+                  <button 
+                    onClick={handleLeave} 
+                    className="btn-cancel" 
+                    style={{ background: '#fff', border: '1px solid #e53e3e', color: '#e53e3e', width: '100%', padding: '8px 12px', borderRadius: 8 }}
+                  >
+                    Leave Hike
+                  </button>
                 ) : (
-                  <button onClick={handleJoin} className="btn-primary" style={{ background: '#2d6a4f', color: '#fff', width: '100%', padding: '8px 12px', borderRadius: 8 }}>Join Hike</button>
+                  <button 
+                    onClick={handleJoin} 
+                    className="btn-primary" 
+                    style={{ background: '#2d6a4f', color: '#fff', width: '100%', padding: '8px 12px', borderRadius: 8 }}
+                  >
+                    Join Hike
+                  </button>
                 )}
               </div>
             )}
@@ -423,7 +544,11 @@ export default function HikeDetails() {
                 </div>
                 <div>
                   <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>Duration</div>
-                  <div style={{ fontSize: 14, fontWeight: 500 }}>{hike.duration || 'Not specified'}</div>
+                  <div style={{ fontSize: 14, fontWeight: 500 }}>
+                    {hike.isMultiDay && hike.durationDays 
+                      ? `${hike.durationDays} Day${hike.durationDays !== 1 ? 's' : ''}`
+                      : (hike.duration || 'Not specified')}
+                  </div>
                 </div>
                 <div>
                   <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>Elevation Gain</div>
@@ -431,18 +556,20 @@ export default function HikeDetails() {
                 </div>
               </div>
             </div>
-
-            {/* Review Section - Show for users who joined this hike and it's in the past and haven't reviewed yet */}
-            {isJoined && hike.date && new Date(hike.date) < new Date() && !hasReviewed && (
+            
+            {/* Review Section - Show for users who participated in this hike and it's past and not the creator */}
+            {(isJoined || isParticipant) && isPast && !isCreator && (
               <div style={{ marginTop: 12 }}>
                 <ReviewCard
                   hikeId={hike.id}
                   guideId={hike.guide?.id}
                   guideName={hike.guide?.user?.name || hike.guideName}
+                  hasReviewed={hasReviewed}
                   onSubmitted={() => setHasReviewed(true)}
                 />
               </div>
             )}
+
           </aside>
         </div>
 
@@ -453,16 +580,28 @@ export default function HikeDetails() {
             <div style={{ display: 'flex', gap: 12 }}>
                 <button 
                   className="btn-cancel" 
-                  style={{ borderColor: '#2d6a4f', color: '#2d6a4f' }} 
-                  onClick={() => setEditMode(true)}
+                  style={{ 
+                    borderColor: isPast ? '#d1d5db' : '#2d6a4f', 
+                    color: isPast ? '#9ca3af' : '#2d6a4f',
+                    cursor: isPast ? 'not-allowed' : 'pointer',
+                    opacity: isPast ? 0.6 : 1
+                  }} 
+                  onClick={() => !isPast && setEditMode(true)}
+                  disabled={isPast}
+                  title={isPast ? 'Cannot edit past hikes' : 'Edit this hike'}
                 >
                 Edit Hike
               </button>
                 <button 
                   className="btn-cancel" 
-                  style={{ borderColor: '#e53e3e', color: '#e53e3e' }} 
+                  style={{ 
+                    borderColor: '#e53e3e', 
+                    color: '#e53e3e',
+                    cursor: 'pointer'
+                  }} 
                   onClick={handleDelete} 
                   disabled={deleting}
+                  title={isPast ? 'Delete this past hike' : 'Delete this hike'}
                 >
                 {deleting ? 'Deleting…' : 'Delete Hike'}
               </button>
@@ -470,17 +609,28 @@ export default function HikeDetails() {
           ) : (
               <EditHikeForm
                 hike={hike}
-                onSave={() => {
-                  setEditMode(false);
-                  load();
+                onSave={async () => {
+                  console.log('[HikeDetails] EditForm onSave called, loading updated hike data...');
+                  try {
+                    // Wait for data to load, then close edit form
+                    await load();
+                    console.log('[HikeDetails] Hike data reloaded, closing edit form');
+                    setEditMode(false);
+                  } catch (err) {
+                    console.error('[HikeDetails] Failed to reload hike data:', err);
+                  }
                 }}
-                onCancel={() => setEditMode(false)}
+                onCancel={() => {
+                  console.log('[HikeDetails] Edit cancelled');
+                  setEditMode(false);
+                }}
                 onDelete={handleDelete}
                 deleting={deleting}
               />
           )}
         </div>
       )}
+      </div>
       </div>
     </div>
   );

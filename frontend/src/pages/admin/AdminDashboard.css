@@ -1,0 +1,20 @@
+.admin-dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.admin-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.admin-tabs { display:flex; gap:8px; margin: 12px 0; }
+.admin-tabs button { padding: 8px 12px; border:1px solid #eee; background:#faf6f2; cursor:pointer; border-radius:20px; }
+.admin-tabs button.active { background:#fff; color:#213126; border-color: #eef1eb; box-shadow:0 2px 8px rgba(16,24,20,0.04) }
+.admin-section { margin-top: 16px; }
+.placeholder { padding: 24px; color: #666; border: 1px dashed #eee; border-radius: 10px; }
+.admin-table { width:100%; border-collapse: collapse; }
+.admin-table th, .admin-table td { text-align:left; padding:10px 12px; border-bottom:1px solid #f3f4f2; }
+.dashboard-card { padding: 18px; border-radius: 10px; background: #fff; box-shadow: 0 8px 20px rgba(12,20,12,0.04); border:1px solid #f0f2ef; }
+.card-title { color: #6b6f63; font-size: 13px; }
+.card-value { margin-top:10px; font-size:20px; font-weight:700; color:#203126 }

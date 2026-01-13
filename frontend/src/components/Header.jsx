@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth, onAuthStateChanged } from '../firebase';
 import api from '../api';
@@ -9,38 +9,46 @@ export default function Header({ onOpenAuthModal }) {
   const [userRole, setUserRole] = useState(null);
   const navigate = useNavigate();
 
-  // Listen for login/logout
+  const fetchUserRole = useCallback(async () => {
+    try {
+      // Prefer /me. Fallback to /profile if older backend.
+      const res = await api.get('/me').catch(() => api.get('/profile'));
+      const role = res?.data?.role || null;
+
+      setUserRole(role);
+
+      // Do not expose admin affordances in the main header
+    } catch (err) {
+      console.error('[Header] Failed fetching role:', err);
+      // If we can't confirm role, do NOT assume admin.
+      setUserRole(null);
+    }
+  }, []);
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
+
       if (u) {
         fetchUserRole();
       } else {
         setUserRole(null);
+        // No admin signaling from main header
       }
     });
+
     return () => unsub();
-  }, []);
+  }, [fetchUserRole]);
 
-  // Fetch user role from backend
-  const fetchUserRole = async () => {
-    try {
-      const response = await api.get('/api/profile').catch(() => api.get('/api/me'));
-      const role = response.data?.role;
-
-      if (role) {
-        setUserRole(role);
-      } else {
-        setUserRole('hiker'); // fallback
-      }
-    } catch (err) {
-      console.error('[Header] Failed fetching role:', err);
-    }
-  };
+  // On hard reload where auth.currentUser is already set
+  useEffect(() => {
+    if (auth.currentUser) fetchUserRole();
+  }, [fetchUserRole]);
 
   async function handleSignOut() {
     try {
       await auth.signOut();
+      setUserRole(null);
       navigate('/explore');
     } catch (err) {
       console.error('Sign-out failed:', err);
@@ -48,9 +56,9 @@ export default function Header({ onOpenAuthModal }) {
     }
   }
 
+  const isVisitor = !user;
   const isGuide = userRole === 'guide';
   const isHiker = userRole === 'hiker';
-  const isVisitor = !user;
 
   return (
     <header className="header">
@@ -59,57 +67,43 @@ export default function Header({ onOpenAuthModal }) {
       </div>
 
       <nav className="nav-links">
-        {/* SHARED LINKS */}
         <Link to="/explore">Home</Link>
 
-        {/* ---- GUIDE HEADER ---- */}
         {isGuide && (
           <>
             <Link to="/hikes/create">Create Hike</Link>
-            <Link to="/my-bookings">My Bookings</Link>
-            <Link to="/profile/guide">My Hikes</Link>
+            <Link to="/mytrails">My Trails</Link>
           </>
         )}
 
-        {/* ---- HIKER HEADER ---- */}
         {isHiker && (
           <>
-            <Link to="/my-bookings">My Bookings</Link>
+            <Link to="/mytrails">My Trails</Link>
           </>
         )}
 
-        {/* Visitors only see Home (no additional links) */}
       </nav>
 
       <div className="header-right">
-        {/* VISITOR (not logged in) */}
-        {!user && (
+        {isVisitor && (
           <>
-            <button
-              onClick={() => onOpenAuthModal('login')}
-              className="btn-login"
-            >
+            <button onClick={() => onOpenAuthModal('login')} className="btn-login">
               Log In
             </button>
-
-            <button
-              onClick={() => onOpenAuthModal('signup')}
-              className="btn-signup"
-            >
+            <button onClick={() => onOpenAuthModal('signup')} className="btn-signup">
               Sign Up
             </button>
           </>
         )}
 
-        {/* LOGGED IN */}
-        {user && (
+        {!isVisitor && (
           <>
             <Link to={isGuide ? "/profile/guide" : "/profile/hiker"} className="profile-icon-link">
-              {user.photoURL ? (
+              {user?.photoURL ? (
                 <img src={user.photoURL} alt="profile" className="profile-avatar" />
               ) : (
                 <div className="profile-avatar-placeholder">
-                  {user.displayName?.[0] || user.email?.[0] || 'U'}
+                  {(user?.displayName?.[0] || user?.email?.[0] || 'U')}
                 </div>
               )}
             </Link>

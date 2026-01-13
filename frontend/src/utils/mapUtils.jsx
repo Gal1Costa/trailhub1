@@ -3,25 +3,25 @@ import { Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 
 // Custom marker icons for destinations
-const createDestinationIcon = (label, color = "#2d6a4f") => {
+const createDestinationIcon = (label, color = "#2d6a4f", size = 24) => {
   return L.divIcon({
     html: `<div style="
       background-color: ${color};
       color: white;
       border-radius: 50%;
-      width: 24px;
-      height: 24px;
+      width: ${size}px;
+      height: ${size}px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: bold;
-      font-size: 12px;
+      font-size: ${size === 24 ? '12px' : '10px'};
       border: 2px solid white;
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     ">${label}</div>`,
     className: "custom-destination-marker",
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
   });
 };
 
@@ -70,7 +70,7 @@ export const createStartEndMarkers = (route) => {
     <Marker
       key="start-marker"
       position={route[0]}
-      icon={createDestinationIcon("START", "#28a745")}
+      icon={createDestinationIcon("START", "#28a745", 16)}
     >
       <Popup>
         <div style={{ textAlign: "center", fontWeight: "bold" }}>
@@ -90,7 +90,7 @@ export const createStartEndMarkers = (route) => {
       <Marker
         key="end-marker"
         position={route[route.length - 1]}
-        icon={createDestinationIcon("END", "#dc3545")}
+        icon={createDestinationIcon("END", "#dc3545", 16)}
       >
         <Popup>
           <div style={{ textAlign: "center", fontWeight: "bold" }}>

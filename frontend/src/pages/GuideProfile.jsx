@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { auth, onAuthStateChanged } from "../firebase";
-import api from "../api";
+import api, { deleteMe } from "../api";
 import EditProfileModal from "../components/EditProfileModal";
+import ConfirmDialog from '../components/ConfirmDialog';
 import HikeCard from "../components/HikeCard";
 import ReviewList from "../components/ReviewList";
 import "./Profile.css";
@@ -18,6 +19,9 @@ export default function GuideProfile() {
   const [activeTab, setActiveTab] = useState("created");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPublicView, setIsPublicView] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteInProgress, setDeleteInProgress] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
   const [completedView, setCompletedView] = useState('created');
   const tabInitializedRef = useRef(false);
   const [authReady, setAuthReady] = useState(false);
@@ -44,7 +48,7 @@ export default function GuideProfile() {
       // Get current user profile to check if they're viewing their own profile
       let currentUserProfile = null;
       try {
-        const currentUserRes = await api.get("/api/me");
+        const currentUserRes = await api.get("/me");
         currentUserProfile = currentUserRes.data;
       } catch (e) {
         // User not logged in, that's okay
@@ -54,9 +58,10 @@ export default function GuideProfile() {
       let profile;
       if (stateGuideId) {
         // Public view via guide id passed in state
-        const res = await api.get(`/api/guides/${String(stateGuideId)}`);
+        const res = await api.get(`/guides/${String(stateGuideId)}`);
         const g = res.data;
         // Normalize guide response into the shape this component expects
+        console.log('[GuideProfile] Guide API response (g):', g);
         profile = {
           id: g.user?.id || g.id,
           email: g.user?.email,
@@ -64,11 +69,12 @@ export default function GuideProfile() {
           role: 'guide',
           guide: {
             ...g,
-            id: g.id || (g.user && g.user.guide && g.user.guide.id) || null,
+            id: g.id, // Guide ID from the API response - should always be present
           },
           createdHikes: g.hikes || g.createdHikes || [],
           bookings: g.bookings || [],
         };
+        console.log('[GuideProfile] Profile constructed with guide.id:', profile.guide?.id);
         
         // Check if current user is the owner of this guide profile
         const isOwner = currentUserProfile && (
@@ -79,11 +85,11 @@ export default function GuideProfile() {
         setIsPublicView(!isOwner);
       } else if (qsUserId) {
         // Viewing a user by userId (querystring). If that user is a guide, fetch the richer guide endpoint.
-        const res = await api.get(`/api/users/${String(qsUserId)}`);
+        const res = await api.get(`/users/${String(qsUserId)}`);
         const tmp = res.data;
         if (tmp && tmp.role === 'guide' && tmp.guide && tmp.guide.id) {
           try {
-            const guideRes = await api.get(`/api/guides/${String(tmp.guide.id)}`);
+            const guideRes = await api.get(`/guides/${String(tmp.guide.id)}`);
             const g = guideRes.data;
             profile = {
               id: g.user?.id || g.id,
@@ -92,7 +98,7 @@ export default function GuideProfile() {
               role: 'guide',
               guide: {
                 ...g,
-                id: g.id || (g.user && g.user.guide && g.user.guide.id) || null,
+                id: g.id, // Guide ID from the API response - should always be present
               },
               createdHikes: g.hikes || g.createdHikes || [],
               bookings: g.bookings || [],
@@ -112,14 +118,14 @@ export default function GuideProfile() {
         setIsPublicView(!isOwner);
       } else {
         // No guide id passed — load current user and, if they are a guide, fetch the canonical guide data
-        const res = await api.get("/api/me", { params: { _t: Date.now() } });
+        const res = await api.get("/me", { params: { _t: Date.now() } });
         const meProfile = res.data;
         if (meProfile.role === 'guide') {
           // If guide record is present, use it; otherwise try to fetch user record which may include guide relation
           let guideIdCandidate = meProfile.guide?.id || null;
           if (!guideIdCandidate) {
             try {
-              const userRes = await api.get(`/api/users/${String(meProfile.id)}`);
+              const userRes = await api.get(`/users/${String(meProfile.id)}`);
               const userObj = userRes.data;
               guideIdCandidate = userObj.guide?.id || null;
             } catch (e) {
@@ -129,20 +135,22 @@ export default function GuideProfile() {
 
           if (guideIdCandidate) {
             try {
-              const guideRes = await api.get(`/api/guides/${String(guideIdCandidate)}`);
-              const g = guideRes.data;
-              profile = {
-                id: g.user?.id || g.id,
-                email: g.user?.email,
-                name: g.user?.name || g.name,
-                role: 'guide',
-                guide: {
-                  ...g,
-                  id: g.id || (g.user && g.user.guide && g.user.guide.id) || null,
-                },
-                createdHikes: g.hikes || g.createdHikes || [],
-                bookings: g.bookings || [],
-              };
+            const guideRes = await api.get(`/guides/${String(guideIdCandidate)}`);
+            const g = guideRes.data;
+            console.log('[GuideProfile] Guide API response (g) for own profile:', g);
+            profile = {
+              id: g.user?.id || g.id,
+              email: g.user?.email,
+              name: g.user?.name || g.name,
+              role: 'guide',
+              guide: {
+                ...g,
+                id: g.id, // Guide ID from the API response - should always be present
+              },
+              createdHikes: g.hikes || g.createdHikes || [],
+              bookings: g.bookings || [],
+            };
+            console.log('[GuideProfile] Profile constructed with guide.id:', profile.guide?.id);
               setIsPublicView(false);
             } catch (innerErr) {
               // If fetching guide endpoint fails, fall back to /api/me response
@@ -166,14 +174,21 @@ export default function GuideProfile() {
         return;
       }
 
-      console.log('[GuideProfile] Loaded profile:', { id: profile.id, email: profile.email, name: profile.name, role: profile.role });
+      console.log('[GuideProfile] Loaded profile:', { 
+        id: profile.id, 
+        email: profile.email, 
+        name: profile.name, 
+        role: profile.role,
+        guideId: profile.guide?.id,
+        guide: profile.guide 
+      });
       setMe(profile);
 
       const now = new Date();
       let hikes = [];
 
       // For guides: show both created hikes AND joined hikes (bookings)
-      const createdHikes = (profile.createdHikes || []).map((h) => ({
+      const createdHikes = (Array.isArray(profile.createdHikes) ? profile.createdHikes : []).map((h) => ({
         ...h,
         imageUrl: h.coverUrl || h.imageUrl || null,
         isCreated: true,
@@ -181,7 +196,7 @@ export default function GuideProfile() {
 
       // Get joined hikes (bookings) 
       const createdHikeIds = new Set(createdHikes.map(h => h.id));
-      const bookings = (profile.bookings || [])
+      const bookings = (Array.isArray(profile.bookings) ? profile.bookings : [])
         .filter((b) => b.hike && !createdHikeIds.has(b.hike.id))
         .map((b) => ({
           ...b.hike,
@@ -194,12 +209,38 @@ export default function GuideProfile() {
 
       const upcomingHikes = hikes.filter((h) => {
         if (!h.date) return false;
-        return new Date(h.date) >= now;
+        
+        // Combine date and meetingTime for accurate comparison
+        const hikeDate = new Date(h.date);
+        
+        // If meetingTime exists, combine it with the date
+        if (h.meetingTime) {
+          const [hours, minutes] = h.meetingTime.split(':').map(Number);
+          hikeDate.setHours(hours, minutes, 0, 0);
+        } else {
+          // If no time specified, set to end of day to keep upcoming
+          hikeDate.setHours(23, 59, 59, 999);
+        }
+        
+        return hikeDate >= now;
       });
 
       const pastHikes = hikes.filter((h) => {
         if (!h.date) return false;
-        return new Date(h.date) < now;
+        
+        // Combine date and meetingTime for accurate comparison
+        const hikeDate = new Date(h.date);
+        
+        // If meetingTime exists, combine it with the date
+        if (h.meetingTime) {
+          const [hours, minutes] = h.meetingTime.split(':').map(Number);
+          hikeDate.setHours(hours, minutes, 0, 0);
+        } else {
+          // If no time specified, set to end of day to keep upcoming
+          hikeDate.setHours(23, 59, 59, 999);
+        }
+        
+        return hikeDate < now;
       });
 
       setUpcoming(upcomingHikes);
@@ -232,15 +273,17 @@ export default function GuideProfile() {
 
   const counts = useMemo(
     () => {
-      const createdHikes = (upcoming || []).filter(h => h.isCreated).concat((past || []).filter(h => h.isCreated));
-      const upcomingJoined = (upcoming || []).filter(h => !h.isCreated);
+      const upcomingArr = Array.isArray(upcoming) ? upcoming : [];
+      const pastArr = Array.isArray(past) ? past : [];
+      const createdHikes = upcomingArr.filter(h => h.isCreated).concat(pastArr.filter(h => h.isCreated));
+      const upcomingJoined = upcomingArr.filter(h => !h.isCreated);
 
       return {
-        total: (upcoming?.length || 0) + (past?.length || 0),
+        total: (Array.isArray(upcoming) ? upcoming.length : 0) + (Array.isArray(past) ? past.length : 0),
         created: createdHikes.length,
         joined: upcomingJoined.length, // only upcoming joined hikes
-        upcoming: upcoming?.length || 0,
-        completed: past?.length || 0,
+        upcoming: Array.isArray(upcoming) ? upcoming.length : 0,
+        completed: Array.isArray(past) ? past.length : 0,
       };
     },
     [upcoming, past]
@@ -248,7 +291,7 @@ export default function GuideProfile() {
 
   async function handleLeave(hikeId) {
     try {
-      await api.delete(`/api/hikes/${hikeId}/join`);
+      await api.delete(`/hikes/${hikeId}/join`);
       await load();
     } catch (e) {
       console.error("Leave failed", e);
@@ -258,7 +301,7 @@ export default function GuideProfile() {
 
   async function handleSaveProfile(formData) {
     try {
-      await api.patch('/api/users/profile', formData);
+      await api.patch('/users/profile', formData);
       await load();
     } catch (e) {
       console.error("Save profile failed", e);
@@ -360,7 +403,8 @@ export default function GuideProfile() {
         <div className="hikes-section">
           <h2 className="section-title">Upcoming Created Hikes</h2>
           {(() => {
-            const createdUpcoming = upcoming.filter(h => h.isCreated);
+            const upcomingArr = Array.isArray(upcoming) ? upcoming : [];
+            const createdUpcoming = upcomingArr.filter(h => h.isCreated);
             if (createdUpcoming.length === 0) {
               return (
                 <div className="empty-state">
@@ -399,7 +443,8 @@ export default function GuideProfile() {
         <div className="hikes-section">
           <h2 className="section-title">Upcoming Joined Hikes</h2>
           {(() => {
-            const joinedUpcoming = upcoming.filter(h => !h.isCreated);
+            const upcomingArr = Array.isArray(upcoming) ? upcoming : [];
+            const joinedUpcoming = upcomingArr.filter(h => !h.isCreated);
             if (joinedUpcoming.length === 0) {
               return (
                 <div className="empty-state">
@@ -456,13 +501,13 @@ export default function GuideProfile() {
           </div>
 
           {completedView === 'created' ? (
-            (past || []).filter(h => h.isCreated).length === 0 ? (
+            (Array.isArray(past) ? past : []).filter(h => h.isCreated).length === 0 ? (
               <div className="empty-state">
                 <p>No completed created hikes yet.</p>
               </div>
             ) : (
               <div className="hikes-list">
-                {(past || []).filter(h => h.isCreated).map((h) => (
+                {(Array.isArray(past) ? past : []).filter(h => h.isCreated).map((h) => (
                   <HikeCard
                     key={h.id}
                     hike={h}
@@ -476,13 +521,13 @@ export default function GuideProfile() {
               </div>
             )
           ) : (
-            (past || []).filter(h => !h.isCreated).length === 0 ? (
+            (Array.isArray(past) ? past : []).filter(h => !h.isCreated).length === 0 ? (
               <div className="empty-state">
                 <p>No completed joined hikes yet.</p>
               </div>
             ) : (
               <div className="hikes-list">
-                {(past || []).filter(h => !h.isCreated).map((h) => (
+                {(Array.isArray(past) ? past : []).filter(h => !h.isCreated).map((h) => (
                   <HikeCard
                     key={h.id}
                     hike={h}
@@ -500,9 +545,29 @@ export default function GuideProfile() {
       ) : null}
 
       {/* Reviews Section */}
-      <div className="reviews-section-container" style={{ marginTop: '24px' }}>
-        <ReviewList guideId={me.guide?.id} title="Reviews for this Guide" />
-      </div>
+      {(() => {
+        // Get the guide ID from the profile being viewed
+        // The guide ID should be in me.guide.id when viewing a guide profile
+        const guideId = me?.guide?.id;
+        
+        console.log('[GuideProfile] Reviews section - me:', me, 'guideId:', guideId);
+        
+        if (guideId) {
+          return (
+            <div className="reviews-section-container" style={{ marginTop: '24px' }}>
+              <ReviewList guideId={guideId} title="Reviews for this Guide" />
+            </div>
+          );
+        } else {
+          return (
+            <div className="reviews-section-container" style={{ marginTop: '24px' }}>
+              <div style={{ color: '#666', fontStyle: 'italic' }}>
+                Unable to load reviews: Guide ID not found. Debug: me.guide = {JSON.stringify(me?.guide)}
+              </div>
+            </div>
+          );
+        }
+      })()}
 
       {/* Edit Profile Modal */}
       <EditProfileModal
@@ -510,6 +575,29 @@ export default function GuideProfile() {
         onClose={() => setIsEditModalOpen(false)}
         user={me}
         onSave={handleSaveProfile}
+        onDelete={async () => {
+          setDeleteInProgress(true);
+          setDeleteError(null);
+          try {
+            await deleteMe();
+            try { await auth.signOut(); } catch (e) {}
+            try { window.dispatchEvent(new CustomEvent('app:toast', { detail: { message: 'Account deleted', type: 'success' } })); } catch (e) {}
+            window.location.href = '/explore';
+          } catch (e) {
+            console.error('Account deletion failed', e);
+            // If 401 Account deleted, treat as success and sign out
+            if (e?.response?.status === 401 || e?.response?.data?.error === 'Account deleted') {
+              try { await auth.signOut(); } catch (signOutErr) {}
+              try { window.dispatchEvent(new CustomEvent('app:toast', { detail: { message: 'Account deleted', type: 'success' } })); } catch (toastErr) {}
+              window.location.href = '/explore';
+            } else {
+              setDeleteError(e?.response?.data?.error || e.message || 'Failed to delete account');
+              setDeleteInProgress(false);
+            }
+          }
+        }}
+        deleteInProgress={deleteInProgress}
+        isPublicView={isPublicView}
       />
     </div>
   );

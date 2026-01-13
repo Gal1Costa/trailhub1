@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { auth, updatePassword, updateProfile, reauthenticateWithCredential, EmailAuthProvider } from '../firebase';
 import './EditProfileModal.css';
 
-export default function EditProfileModal({ isOpen, onClose, user, onSave }) {
+export default function EditProfileModal({ isOpen, onClose, user, onSave, onDelete, deleteInProgress, isPublicView }) {
   const [formData, setFormData] = useState({
     name: '',
     location: '',
@@ -14,6 +14,7 @@ export default function EditProfileModal({ isOpen, onClose, user, onSave }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [needsReauth, setNeedsReauth] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Update form data when user data changes or modal opens
   useEffect(() => {
@@ -241,23 +242,95 @@ export default function EditProfileModal({ isOpen, onClose, user, onSave }) {
           {error && <div className="form-error">{error}</div>}
 
           <div className="form-actions">
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn-cancel"
-              disabled={saving}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn-save"
-              disabled={saving}
-            >
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              {!isPublicView && onDelete ? (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="btn-delete-account"
+                  disabled={saving || deleteInProgress}
+                >
+                  {deleteInProgress ? 'Deleting...' : 'Delete Account'}
+                </button>
+              ) : null}
+            </div>
+            <div className="form-actions-right">
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn-cancel"
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn-save"
+                disabled={saving}
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
           </div>
         </form>
+
+        {showDeleteConfirm && (
+          <div 
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.8)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '12px',
+              zIndex: 10
+            }}
+          >
+            <div 
+              style={{
+                background: 'white',
+                padding: '24px',
+                borderRadius: '8px',
+                maxWidth: '400px',
+                width: '90%'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 style={{ marginTop: 0, color: '#dc2626' }}>Delete Account?</h3>
+              <p style={{ color: '#374151' }}>
+                Are you sure you want to permanently delete your account? This will remove your profile and anonymize personal data.
+              </p>
+              <p style={{ fontSize: '14px', color: '#666', marginBottom: '16px' }}>
+                This action cannot be undone.
+              </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="btn-cancel"
+                  disabled={deleteInProgress}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    if (onDelete) onDelete();
+                  }}
+                  className="btn-delete-account"
+                  disabled={deleteInProgress}
+                >
+                  {deleteInProgress ? 'Deleting...' : 'Yes, Delete Account'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

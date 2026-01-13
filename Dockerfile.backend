@@ -2,19 +2,21 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dependencies first (better caching)
+# Install build tools for native modules (if any)
+RUN apk add --no-cache python3 make g++
+
+# Copy package files
 COPY package*.json ./
-RUN npm ci --omit=dev
+COPY prisma ./prisma/
 
-# Copy Prisma schema and migrations (needed for generate and migrate)
-COPY prisma ./prisma
+# Install ALL dependencies (including dev for Prisma)
+RUN npm ci  # REMOVE --omit=dev
 
-# Generate Prisma client
+# Generate Prisma Client
 RUN npx prisma generate
 
 # Copy the rest of the application
 COPY . .
-
 
 EXPOSE 3000
 
@@ -23,5 +25,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/healthz', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Run migrations then start backend
-# Regenerate Prisma client at startup (Prisma skips if schema unchanged, but adds ~2s to startup)
-CMD sh -c "npx prisma generate && npx prisma migrate deploy && node src/app/index.js"
+CMD ["node", "src/app/index.js"]

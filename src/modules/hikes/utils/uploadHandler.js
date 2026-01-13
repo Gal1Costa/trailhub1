@@ -72,11 +72,31 @@ async function handleFileUploads({ files, data, storageAdapter }) {
   // Handle cover image
   const coverArr = files['cover'];
   if (coverArr?.length > 0) {
+    // Delete old cover if it exists in storage adapter
+    if (data.oldCoverUrl && storageAdapter?.deleteObject) {
+      try {
+        // Extract key from URL (for Spaces: https://bucket.region.digitaloceanspaces.com/covers/filename.jpg)
+        const urlParts = data.oldCoverUrl.split('/');
+        const keyIndex = urlParts.findIndex(part => part === 'covers');
+        if (keyIndex !== -1 && urlParts[keyIndex + 1]) {
+          const key = `covers/${urlParts[keyIndex + 1]}`;
+          console.log(`[handleFileUploads] Deleting old cover: ${key}`);
+          await storageAdapter.deleteObject(key);
+        }
+      } catch (deleteErr) {
+        console.warn('[handleFileUploads] Failed to delete old cover:', deleteErr.message);
+        // Continue with upload even if delete fails
+      }
+    }
+    
     data.coverUrl = await uploadFile({
       file: coverArr[0],
       folder: 'covers',
       storageAdapter,
     });
+    
+    // Remove the temporary oldCoverUrl from data
+    delete data.oldCoverUrl;
   }
 
 }

@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { auth, onAuthStateChanged } from "../firebase";
-import api from "../api";
+import api, { deleteMe } from "../api";
 import EditProfileModal from "../components/EditProfileModal";
+import ConfirmDialog from '../components/ConfirmDialog';
 import HikeCard from "../components/HikeCard";
 import "./Profile.css";
 
@@ -16,6 +17,9 @@ export default function HikerProfile() {
   const [err, setErr] = useState("");
   const [activeTab, setActiveTab] = useState("joined");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteInProgress, setDeleteInProgress] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
   const [isPublicView, setIsPublicView] = useState(false);
   const tabInitializedRef = useRef(false);
   const [authReady, setAuthReady] = useState(false);
@@ -44,7 +48,7 @@ export default function HikerProfile() {
       console.debug('[HikerProfile] load() called, location.state:', location.state, 'qsUserId:', qsUserId, 'resolved userId:', userId);
       if (userId) {
         // public view of another user (from state or querystring)
-        const res = await api.get(`/api/users/${String(userId)}`);
+        const res = await api.get(`/users/${String(userId)}`);
         profile = res.data;
         setIsPublicView(true);
         // If the user we're viewing is a guide, forward to the guide profile route
@@ -54,7 +58,7 @@ export default function HikerProfile() {
           return;
         }
       } else {
-        const res = await api.get("/api/me", { params: { _t: Date.now() } });
+        const res = await api.get("/me", { params: { _t: Date.now() } });
         profile = res.data;
         setIsPublicView(false);
       }
@@ -71,8 +75,8 @@ export default function HikerProfile() {
       const now = new Date();
       
       // For hikers: show bookings (hikes they joined)
-      const bookings = profile.bookings || [];
-      const hikes = bookings
+      const bookings = Array.isArray(profile.bookings) ? profile.bookings : [];
+      const hikes = (Array.isArray(bookings) ? bookings : [])
         .filter((b) => b.hike)
         .map((b) => ({
           ...b.hike,
@@ -82,12 +86,38 @@ export default function HikerProfile() {
 
       const upcomingHikes = hikes.filter((h) => {
         if (!h.date) return false;
-        return new Date(h.date) >= now;
+        
+        // Combine date and meetingTime for accurate comparison
+        const hikeDate = new Date(h.date);
+        
+        // If meetingTime exists, combine it with the date
+        if (h.meetingTime) {
+          const [hours, minutes] = h.meetingTime.split(':').map(Number);
+          hikeDate.setHours(hours, minutes, 0, 0);
+        } else {
+          // If no time specified, set to end of day to keep upcoming
+          hikeDate.setHours(23, 59, 59, 999);
+        }
+        
+        return hikeDate >= now;
       });
 
       const pastHikes = hikes.filter((h) => {
         if (!h.date) return false;
-        return new Date(h.date) < now;
+        
+        // Combine date and meetingTime for accurate comparison
+        const hikeDate = new Date(h.date);
+        
+        // If meetingTime exists, combine it with the date
+        if (h.meetingTime) {
+          const [hours, minutes] = h.meetingTime.split(':').map(Number);
+          hikeDate.setHours(hours, minutes, 0, 0);
+        } else {
+          // If no time specified, set to end of day to keep upcoming
+          hikeDate.setHours(23, 59, 59, 999);
+        }
+        
+        return hikeDate < now;
       });
 
       setUpcoming(upcomingHikes);
@@ -96,7 +126,7 @@ export default function HikerProfile() {
       // Load user's reviews to check which hikes need review
       if (!userId) {
         try {
-          const reviewsRes = await api.get('/api/reviews/user/me');
+          const reviewsRes = await api.get('/reviews/user/me');
           setUserReviews(reviewsRes.data || []);
         } catch (e) {
           console.warn('Failed to load user reviews:', e.message);
@@ -135,7 +165,7 @@ export default function HikerProfile() {
 
   async function handleLeave(hikeId) {
     try {
-      await api.delete(`/api/hikes/${hikeId}/join`);
+      await api.delete(`/hikes/${hikeId}/join`);
       await load();
     } catch (e) {
       console.error("Leave failed", e);
@@ -145,7 +175,7 @@ export default function HikerProfile() {
 
   async function handleSaveProfile(formData) {
     try {
-      await api.patch('/api/users/profile', formData);
+      await api.patch('/users/profile', formData);
       await load();
     } catch (e) {
       console.error("Save profile failed", e);
@@ -180,6 +210,7 @@ export default function HikerProfile() {
                 Edit Profile
               </button>
             )}
+            {/* delete moved to Danger Zone section below for owner-only visibility */}
           </div>
           <h1 className="profile-name">{me.name || me.email || "User"}</h1>
           <p className="profile-role">Hiker</p>
@@ -214,6 +245,8 @@ export default function HikerProfile() {
           <div className="stat-label">Upcoming</div>
         </div>
       </div>
+
+
 
       {/* Tabs */}
       <div className="profile-tabs">
@@ -292,6 +325,29 @@ export default function HikerProfile() {
         onClose={() => setIsEditModalOpen(false)}
         user={me}
         onSave={handleSaveProfile}
+        onDelete={async () => {
+          setDeleteInProgress(true);
+          setDeleteError(null);
+          try {
+            await deleteMe();
+            try { await auth.signOut(); } catch (e) {}
+            try { window.dispatchEvent(new CustomEvent('app:toast', { detail: { message: 'Account deleted', type: 'success' } })); } catch (e) {}
+            window.location.href = '/explore';
+          } catch (e) {
+            console.error('Account deletion failed', e);
+            // If 401 Account deleted, treat as success and sign out
+            if (e?.response?.status === 401 || e?.response?.data?.error === 'Account deleted') {
+              try { await auth.signOut(); } catch (signOutErr) {}
+              try { window.dispatchEvent(new CustomEvent('app:toast', { detail: { message: 'Account deleted', type: 'success' } })); } catch (toastErr) {}
+              window.location.href = '/explore';
+            } else {
+              setDeleteError(e?.response?.data?.error || e.message || 'Failed to delete account');
+              setDeleteInProgress(false);
+            }
+          }
+        }}
+        deleteInProgress={deleteInProgress}
+        isPublicView={isPublicView}
       />
     </div>
   );

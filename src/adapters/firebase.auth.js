@@ -55,3 +55,26 @@ async function verifyIdToken(idToken) {
 }
 
 module.exports = { verifyIdToken };
+
+/**
+ * Delete a firebase user by UID (if admin SDK initialized).
+ * Returns true if deletion attempted (may still throw on errors), false if admin SDK not configured.
+ */
+async function deleteUserByUid(uid) {
+  try {
+    if (!uid) return false;
+    initAdminIfNeeded();
+    if (!admin.apps || admin.apps.length === 0) {
+      console.warn('[firebase.auth] admin SDK not initialized; cannot delete user');
+      return false;
+    }
+    await admin.auth().deleteUser(uid);
+    return true;
+  } catch (err) {
+    console.warn('[firebase.auth] deleteUserByUid failed:', err?.message || err);
+    // rethrow for caller to decide if they need to treat as fatal
+    throw err;
+  }
+}
+
+module.exports = { verifyIdToken, deleteUserByUid };

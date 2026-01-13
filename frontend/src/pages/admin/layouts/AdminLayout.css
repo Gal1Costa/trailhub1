@@ -1,0 +1,10 @@
+.admin-shell { background:#fbfbf9; min-height:100vh; }
+.admin-header { display:flex; justify-content:space-between; align-items:center; padding:18px 28px; background: linear-gradient(90deg,#405c47 0%, #2f6b4f 60%); color: #fff }
+.admin-brand a { color:#fff; font-weight:700; text-decoration:none }
+.brand-title { font-weight:700; font-size:18px; color:#fff }
+.brand-sub { font-size:13px; color: rgba(255,255,255,0.85); margin-top:4px }
+.admin-actions { display:flex; gap:12px; align-items:center }
+.btn-logout { background:#b07b4a; color:#fff; border:none; padding:8px 12px; border-radius:8px }
+.admin-main { max-width:1200px; margin:20px auto; padding:20px }
+.admin-topcards { margin-top: 18px }
+.admin-content { margin-top:18px; }
