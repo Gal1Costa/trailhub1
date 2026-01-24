@@ -68,10 +68,17 @@ jobs:
           ADMIN_UIDS=${{ secrets.CI_ADMIN_UIDS }}
           EOF
 
-      - name: Bring up services (Postgres + Backend)
+      - name: Build backend Docker image
         shell: bash
         run: |
           docker compose version || echo "Docker Compose plugin ready"
+          # Build backend image to ensure latest dependencies are included
+          # --build flag ensures image is rebuilt if package.json changed
+          docker compose -f docker-compose.yml build backend
+
+      - name: Bring up services (Postgres + Backend)
+        shell: bash
+        run: |
           docker compose -f docker-compose.yml up -d db backend
 
       - name: Wait for backend health
