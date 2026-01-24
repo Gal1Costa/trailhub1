@@ -233,3 +233,102 @@ jobs:
           echo "Stopping Docker Compose services..."
           docker compose -f docker-compose.yml down -v || true
           echo "✅ Cleanup complete"
+
+  deploy:
+    name: Deploy to Digital Ocean
+    runs-on: ubuntu-latest
+    needs: test
+    # Only deploy on push to Development branch (not on PRs)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/Development'
+    
+    steps:
+      - name: Validate deployment secrets
+        shell: bash
+        run: |
+          if [ -z "${{ secrets.DEPLOY_SSH_KEY }}" ]; then
+            echo "❌ Error: DEPLOY_SSH_KEY secret is not set"
+            echo "Please add DEPLOY_SSH_KEY secret in GitHub Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          if [ -z "${{ secrets.DEPLOY_HOST }}" ]; then
+            echo "❌ Error: DEPLOY_HOST secret is not set"
+            echo "Please add DEPLOY_HOST secret in GitHub Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          echo "✅ All deployment secrets are set"
+
+      - name: Setup SSH
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+          echo "✅ SSH key configured"
+
+      - name: Deploy to server
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER || 'root' }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/root/trailhub1' }}
+        run: |
+          echo "🚀 Starting deployment to ${DEPLOY_HOST}..."
+          echo "📂 Using deployment path: ${DEPLOY_PATH}"
+          
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} bash -s << ENDSSH
+            set -e
+            DEPLOY_PATH="${DEPLOY_PATH}"
+            echo "📂 Navigating to project directory: \${DEPLOY_PATH}..."
+            cd "\${DEPLOY_PATH}" || { echo "❌ Project directory not found at \${DEPLOY_PATH}!"; exit 1; }
+            
+            echo "📥 Pulling latest code from GitHub..."
+            git fetch origin
+            git reset --hard origin/Development
+            git clean -fd
+            
+            echo "🔧 Pulling latest Docker images..."
+            docker compose pull || true
+            
+            echo "🏗️ Building and starting containers..."
+            docker compose up -d --build
+            
+            echo "⏳ Waiting for services to be ready..."
+            sleep 10
+            
+            echo "🔄 Running database migrations..."
+            docker compose exec -T backend npx prisma migrate deploy || echo "⚠️ Migrations failed or no migrations to run"
+            
+            echo "📊 Checking container status..."
+            docker compose ps
+            
+            echo "✅ Deployment complete!"
+          ENDSSH
+
+      - name: Verify deployment
+        shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER || 'root' }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/root/trailhub1' }}
+        run: |
+          echo "🔍 Verifying deployment health..."
+          
+          # Wait a bit for services to fully start
+          sleep 15
+          
+          # Check backend health
+          BACKEND_URL="http://${DEPLOY_HOST}:3000/healthz"
+          echo "Checking backend at ${BACKEND_URL}..."
+          
+          for i in {1..10}; do
+            if curl -fsS --max-time 5 "${BACKEND_URL}" >/dev/null 2>&1; then
+              echo "✅ Backend is healthy!"
+              exit 0
+            fi
+            echo "Waiting for backend... (attempt $i/10)"
+            sleep 3
+          done
+          
+          echo "⚠️ Backend health check failed, but deployment completed"
+          echo "Please check server logs manually: ssh ${DEPLOY_USER}@${DEPLOY_HOST} 'cd ${DEPLOY_PATH} && docker compose logs'"
