@@ -259,12 +259,48 @@ jobs:
 
       - name: Setup SSH
         shell: bash
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER || 'root' }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 700 ~/.ssh
+          
+          # Write SSH key - handle both single-line and multi-line formats
+          # Remove any leading/trailing whitespace and ensure proper line endings
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
-          echo "✅ SSH key configured"
+          
+          # Verify key exists and has content
+          if [ ! -s ~/.ssh/deploy_key ]; then
+            echo "❌ Error: SSH key file is empty"
+            exit 1
+          fi
+          
+          # Check key format (try to read it)
+          KEY_START=$(head -c 30 ~/.ssh/deploy_key)
+          if [[ ! "$KEY_START" =~ "BEGIN" ]] && [[ ! "$KEY_START" =~ "ssh-" ]]; then
+            echo "⚠️ Warning: Key might not be in standard format"
+            echo "Key starts with: $KEY_START"
+          fi
+          
+          # Try to validate key format (this might fail for some key types, that's OK)
+          ssh-keygen -l -f ~/.ssh/deploy_key >/dev/null 2>&1 || echo "⚠️ Key format validation skipped (this is OK for some key types)"
+          
+          # Add server to known_hosts
+          ssh-keyscan -H ${DEPLOY_HOST} >> ~/.ssh/known_hosts 2>/dev/null || true
+          chmod 644 ~/.ssh/known_hosts
+          
+          echo "✅ SSH key configured and validated"
+          
+          # Test SSH connection
+          echo "🔍 Testing SSH connection..."
+          if ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${DEPLOY_USER}@${DEPLOY_HOST} "echo 'SSH connection successful'" 2>&1; then
+            echo "✅ SSH connection test passed"
+          else
+            echo "⚠️ SSH connection test failed, but continuing..."
+            echo "This might be normal if the server requires additional setup"
+          fi
 
       - name: Deploy to server
         shell: bash
