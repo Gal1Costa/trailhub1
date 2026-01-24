@@ -1,0 +1,131 @@
+.hike-details-page {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  min-height: 100vh;
+}
+
+.hike-details-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Cover image container */
+.cover-image-container {
+  margin-left: -20px !important;
+  margin-right: -20px !important;
+}
+
+/* Participant name styling */
+.participant-name {
+  color: #111827;
+}
+
+.hike-details-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 320px !important;
+  gap: 20px !important;
+  align-items: start !important;
+}
+
+/* Medium desktop responsiveness */
+@media (max-width: 1200px) {
+  .hike-details-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 20px;
+  }
+
+  .main-content-mobile {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .right-section-mobile {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+.main-content-mobile {
+  display: flex;
+  flex-direction: column;
+}
+
+.right-section-mobile {
+  width: 100%;
+}
+
+.hike-map {
+  height: 360px !important;
+}
+
+/* Tablet responsiveness */
+@media (max-width: 1024px) {
+  .hike-details-wrapper {
+    padding: 16px;
+  }
+
+  .hike-details-grid {
+    display: flex !important;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .main-content-mobile {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .right-section-mobile {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .hike-map {
+    height: 300px !important;
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .hike-details-wrapper {
+    padding: 12px;
+  }
+
+  .cover-image-container {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .hike-details-grid {
+    display: flex !important;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .right-section-mobile {
+    order: 2;
+  }
+
+  .main-content-mobile {
+    order: 3;
+  }
+
+  .hike-map {
+    height: 240px !important;
+  }
+}
+
+/* Small mobile phones */
+@media (max-width: 640px) {
+  .hike-details-wrapper {
+    padding: 8px;
+  }
+
+  .hike-details-grid {
+    gap: 12px;
+  }
+
+  .hike-map {
+    height: 200px !important;
+  }
+}

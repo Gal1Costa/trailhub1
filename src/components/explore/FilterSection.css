@@ -1,0 +1,369 @@
+.filter-section {
+  background: white;
+  border: 1px solid #f3f4f6;
+  border-radius: 12px;
+  padding: 24px;
+  height: fit-content;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* The filter sidebar positioning is controlled at the page level (Explore.css). */
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.filter-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.filter-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.filter-group-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+/* Location Input */
+.location-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.location-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #059669;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.location-input {
+  width: 100%;
+  padding: 10px 16px;
+  padding-left: 40px;
+}
+
+.location-input-wrapper .location-input {
+  padding-left: 40px;
+}
+
+/* Date Range */
+/* Date Range - FIXED HEIGHT */
+.date-range-wrapper {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  align-items: center; /* Ensure vertical alignment */
+}
+
+.date-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 40px; 
+}
+
+.date-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #059669;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 1;
+  margin: 0;
+}
+
+.date-input {
+  width: 100%;
+  height: 100%; 
+  padding: 0 16px;
+  padding-left: 40px;
+  min-width: 0;
+  box-sizing: border-box; 
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  color: #111827;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+
+/* Improve native date picker appearance consistency */
+.date-input[type="date"] {
+  color-scheme: light;
+}
+
+/* Hide the native right-side calendar icon; use the left one */
+.date-input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  width: 36px;
+  height: 100%;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Attempt to reduce native indicators across engines */
+.date-input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.date-input-wrapper .date-input {
+  padding-left: 40px;
+}
+
+/* Price Range */
+.price-range-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.price-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 16px;
+  box-sizing: border-box;
+}
+
+.price-arrow {
+  font-size: 18px;
+  color: #6b7280;
+  font-weight: bold;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* Difficulty Checkboxes */
+.filter-section .difficulty-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-section .difficulty-checkbox {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 12px;
+  cursor: pointer;
+  padding: 0 !important;
+  width: 100%;
+  border: none !important;
+  background: none !important;
+  background-color: transparent !important;
+  margin: 0;
+  transition: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.filter-section .difficulty-checkbox:hover {
+  background: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.filter-section .difficulty-checkbox:focus-within {
+  outline: none !important;
+  background: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.filter-section .difficulty-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #10b981;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  flex-shrink: 0;
+  margin: 0;
+  transition: border-color 0.15s ease;
+}
+
+.filter-section .difficulty-checkbox input[type="checkbox"]:hover {
+  border-color: #10b981;
+}
+.filter-section .difficulty-checkbox input[type="checkbox"]:checked {
+  border-color: #10b981;
+}
+
+.filter-section .checkbox-input {
+  width: 18px !important;
+  height: 18px !important;
+  cursor: pointer;
+  accent-color: #10b981;
+  border-radius: 4px !important;
+  border: 1px solid #d1d5db !important;
+  flex-shrink: 0;
+  margin: 0;
+  transition: border-color 0.15s ease;
+  padding: 0 !important;
+  background: white !important;
+  background-color: white !important;
+}
+
+.filter-section .checkbox-input:hover {
+  border-color: #10b981 !important;
+  background: white !important;
+  background-color: white !important;
+}
+
+.filter-section .checkbox-input:checked {
+  border-color: #10b981 !important;
+  background: white !important;
+  background-color: white !important;
+}
+
+.filter-section .difficulty-checkbox .checkbox-label,
+.filter-section .checkbox-label {
+  font-size: 14px !important;
+  color: #374151 !important;
+  cursor: pointer;
+  line-height: 1.5 !important;
+  user-select: none;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-weight: normal !important;
+  transition: none !important;
+  display: inline !important;
+  box-shadow: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  text-align: left !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+
+.filter-section .difficulty-checkbox .checkbox-label:hover,
+.filter-section .checkbox-label:hover {
+  color: #374151 !important;
+  background: none !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Filter Actions */
+.filter-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.filter-action-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+
+/* Apply button (primary) */
+.filter-actions .btn-primary {
+  background: #059669;
+  color: white;
+  border: none;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.filter-actions .btn-primary:hover {
+  background: #047857;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Clear button (secondary) */
+.filter-actions .btn-cancel {
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.filter-actions .btn-cancel:hover {
+  background: #f9fafb;
+}
+
+/* General Input Styles */
+.filter-input {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  background: white;
+  color: #111827;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+
+.filter-input:hover {
+  background: #f9fafb;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+/* More specific selector for filter inputs to avoid conflicts */
+.filter-section .filter-input:focus {
+  box-shadow: 0 0 0 2px #10b981;
+}
+
+.filter-input::placeholder {
+  color: #9ca3af;
+}

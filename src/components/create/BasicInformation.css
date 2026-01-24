@@ -1,0 +1,334 @@
+/* Basic Information Component Styles - Scoped to avoid conflicts */
+@import './Tooltip.css';
+
+:root {
+  --input-border: #e6ebe5;
+  --input-border-hover: #10b981;
+  --input-focus-shadow: rgba(16, 185, 129, 0.1);
+  --error-border: #ef4444;
+  --error-bg: #fef2f2;
+  --error-shadow: rgba(239, 68, 68, 0.2);
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --text-muted: #6b7280;
+}
+
+.basic-info-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.basic-info-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+}
+
+.basic-info-container .grid-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .basic-info-container .grid-row {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.basic-info-container .field-error-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.basic-info-container .field-error-container label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.label-with-tooltip {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.required-asterisk {
+  color: var(--error-border);
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  z-index: 10;
+  color: var(--input-border-hover);
+  flex-shrink: 0;
+}
+
+.input-icon-clickable {
+  pointer-events: auto !important;
+  cursor: pointer;
+  z-index: 10;
+  transition: color 0.2s;
+}
+
+.input-icon-clickable:hover {
+  color: var(--input-border-hover);
+}
+
+.input-icon-required {
+  color: var(--input-border-hover);
+}
+
+.input-icon-optional {
+  color: var(--input-border-hover);
+}
+
+/* Common styles for all regular inputs and selects */
+.input-base {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: white;
+  box-sizing: border-box;
+  transition: all 150ms;
+}
+
+.input-base:focus {
+  outline: none;
+  border-color: var(--input-border-hover);
+  box-shadow: 0 0 0 2px var(--input-focus-shadow);
+}
+
+.input-base.has-error {
+  border-color: var(--error-border);
+  background-color: var(--error-bg);
+}
+
+.input-base.has-error:focus {
+  border-color: var(--error-border);
+  box-shadow: 0 0 0 2px var(--error-shadow);
+}
+
+.input-with-icon {
+  padding-left: 40px;
+}
+
+.basic-info-container input[type="date"].input-with-icon,
+.basic-info-container input[type="time"].input-with-icon {
+  color-scheme: light;
+}
+
+.basic-info-container input[type="date"].input-with-icon::-webkit-calendar-picker-indicator,
+.basic-info-container input[type="time"].input-with-icon::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  width: 36px;
+  height: 100%;
+  cursor: default;
+  pointer-events: none;
+}
+
+.basic-info-container .field-error {
+  color: #dc2626;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+/* Difficulty Level Custom Dropdown Styling */
+.difficulty-dropdown-container {
+  position: relative;
+  width: 100%;
+}
+
+.difficulty-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px 10px 40px;
+  padding-right: 36px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 150ms;
+  box-sizing: border-box;
+  text-align: left;
+  position: relative;
+  min-height: 42px;
+}
+
+.difficulty-trigger:hover {
+  background: #f9fafb;
+  border-color: var(--input-border-hover);
+}
+
+.difficulty-trigger:focus,
+.difficulty-trigger.open {
+  border-color: var(--input-border-hover);
+  box-shadow: 0 0 0 2px var(--input-focus-shadow);
+}
+
+.difficulty-trigger.has-error {
+  border-color: var(--error-border);
+  background-color: var(--error-bg);
+}
+
+.difficulty-trigger.has-error:focus {
+  border-color: var(--error-border);
+  box-shadow: 0 0 0 2px var(--error-shadow);
+}
+
+.difficulty-trigger-label {
+  flex: 1;
+  text-align: left;
+  color: inherit;
+}
+
+.difficulty-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+  pointer-events: none;
+}
+
+.difficulty-arrow.open {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.difficulty-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+  overflow: hidden;
+  min-width: 100%;
+}
+
+.difficulty-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border: 1px solid #f3f4f6;
+}
+
+.difficulty-option:hover,
+.difficulty-option:focus {
+  outline: none;
+  background: #f9fafb;
+}
+
+.difficulty-option.active {
+  background: #f0fdf4;
+  color: var(--input-border-hover);
+  font-weight: 500;
+}
+
+.difficulty-option.active:focus,
+.difficulty-option.active:hover {
+  background: #f0fdf4;
+}
+
+/* Multi-day hike styles */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  transition: all 0.2s;
+}
+
+.checkbox-label:hover {
+  border-color: var(--input-border-hover);
+  background: #f0fdf4;
+}
+
+.checkbox-input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--input-border-hover);
+}
+
+.checkbox-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+.date-range-display {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.multi-day-fields {
+  padding: 1rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}

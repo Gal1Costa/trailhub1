@@ -1,0 +1,313 @@
+.explore-page {
+  padding: 32px;
+  max-width: 1440px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.explore-layout {
+  display: grid;
+  grid-template-columns: 25% 75%;
+  gap: 32px;
+  align-items: start;
+}
+
+.explore-layout .filter-sidebar {
+  position: sticky;
+  top: 0;
+  padding-top: 0;
+}
+
+.content-area {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 30px;
+}
+
+/* Hero Section */
+.explore-hero {
+  position: relative;
+  padding: 40px;
+  background: white;
+  border: 1px solid #f3f4f6;
+  border-radius: 24px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  margin-bottom: 32px;
+  overflow: visible;
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 50;
+}
+
+/* Grid pattern background */
+.explore-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Glow effects */
+.explore-hero::after {
+  content: '';
+  position: absolute;
+  top: -192px;
+  right: -192px;
+  width: 384px;
+  height: 384px;
+  background: radial-gradient(circle, rgba(220, 252, 231, 0.4) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Second glow effect (blue) */
+.explore-hero .glow-blue {
+  position: absolute;
+  bottom: -160px;
+  left: -160px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(219, 234, 254, 0.3) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-title {
+  margin: 0 0 12px 0;
+  font-size: 36px;
+  font-weight: 500;
+  color: #111827;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-subtitle {
+  margin: 0 0 32px 0;
+  font-size: 18px;
+  color: #4b5563;
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+}
+
+/* Results Header */
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 32px;
+  position: relative;
+  z-index: 60;
+}
+
+.results-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 20px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #047857;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.results-badge::before,
+.results-badge::after {
+  content: '';
+  position: absolute;
+  width: 48px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #86efac, transparent);
+}
+
+.results-badge::before {
+  left: -56px;
+  top: 50%;
+}
+
+.results-badge::after {
+  right: -56px;
+  top: 50%;
+}
+
+/* GRID that holds HikeCard components */
+.hikes-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .hikes-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .hikes-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+
+/* Empty state for Explore page */
+.empty-state {
+  text-align: center;
+  padding: 96px 24px;
+  color: #9ca3af;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
+  border: 1px solid #f3f4f6;
+  border-radius: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .explore-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    align-items: stretch;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .filter-sidebar {
+    position: relative;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+  }
+
+  .content-area {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .explore-hero {
+    margin: 0 0 24px 0;
+    width: 100%;
+    padding: 32px 24px;
+    overflow: visible;
+    position: relative;
+    box-sizing: border-box;
+    border-radius: 20px;
+  }
+  
+  .hikes-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: 100%;
+  }
+  
+  .empty-state {
+    padding: 64px 20px;
+    width: 100%;
+    border-radius: 16px;
+  }
+}
+
+
+/* Mobile phones (below 768px) */
+@media (max-width: 767px) {
+  .explore-page {
+    padding: 16px;
+  }
+
+  .explore-layout {
+    gap: 16px;
+  }
+
+  .filter-sidebar {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .explore-hero {
+    padding: 24px 20px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+  }
+
+  .hero-title {
+    font-size: 24px;
+  }
+
+  .hero-subtitle {
+    font-size: 15px;
+  }
+
+  .hikes-grid {
+    gap: 16px;
+  }
+
+  .results-badge {
+    padding: 6px 16px;
+    font-size: 13px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 640px) {
+  .explore-page {
+    padding: 12px;
+  }
+
+  .explore-hero {
+    padding: 20px 16px;
+  }
+
+  .hero-title {
+    font-size: 22px;
+  }
+
+  .hero-subtitle {
+    font-size: 14px;
+  }
+
+  .hikes-grid {
+    gap: 12px;
+  }
+  
+  .empty-state {
+    padding: 48px 16px;
+    font-size: 14px;
+  }
+}

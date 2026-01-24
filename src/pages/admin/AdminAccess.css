@@ -1,0 +1,64 @@
+body,html,#root { height: 100%; }
+.admin-access-bg{
+  min-height: 100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: radial-gradient(1200px 800px at 10% 10%, #eaf4ee 0%, rgba(234,244,238,0) 40%), linear-gradient(135deg, #dfeee6 0%, #e9f2ec 50%, #f3f6f4 100%);
+  background-attachment: fixed;
+}
+.admin-access-bg::after{
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.12) 40%, rgba(255,255,255,0.18) 60%, rgba(255,255,255,0.3) 100%);
+  transform: rotate(-12deg) scale(1.2);
+  pointer-events: none;
+  border-radius: 20px;
+  mix-blend-mode: overlay;
+}
+.admin-access-card{
+  width: 420px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 20px 40px rgba(12,20,12,0.08);
+  padding: 28px;
+  text-align: left;
+  position: relative;
+  z-index: 2;
+}
+.admin-access-icon{ width:56px; height:56px; margin: 0 auto 8px; background:#eaf4ec; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; color:#1f4d3a }
+.admin-access-card h2{ text-align:center; margin: 6px 0 2px; color:#0f172a }
+.admin-access-card .muted{ text-align:center; color:#6b7280; font-size:13px }
+.field-label{ display:block; margin-top:12px; color:#4b5563; font-size:13px }
+.field-input{ 
+  width:100%; 
+  padding:10px 12px; 
+  border-radius:8px; 
+  border:1px solid #e6eef0; 
+  margin-top:6px; 
+  background:#fbfbfb;
+  box-sizing: border-box;
+  text-align: left;
+}
+.demo-box{ margin-top:12px; background:#faf6f2; padding:10px 12px; border-radius:8px; color:#374151; font-size:13px; border:1px solid #f0eae2 }
+.demo-title{ font-weight:600; margin-bottom:6px }
+.error{ margin-top:10px; color:#b91c1c }
+.btn{ padding:8px 12px; border-radius:8px; background:#f3f4f6; border:1px solid transparent; cursor:pointer }
+.btn-primary{ background:#2f6b4f; color:#fff; border-color:#2f6b4f }
+.btn-outline{ background:transparent; border:1px solid #d1d5db }
+.admin-access {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:60vh;
+}
+.admin-access-card {
+  background: #fff;
+  padding: 28px;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+  max-width: 720px;
+}
+.btn-primary { background:#2f6b4f; color:#fff; padding:8px 14px; border-radius:8px; border:none }
+.btn-link { color:#2f6b4f; text-decoration:none; align-self:center }
