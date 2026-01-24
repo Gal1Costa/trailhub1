@@ -5,6 +5,7 @@ const reviewsRepo = require('../repository');
 const bookingsRepo = require('../../bookings/repository');
 const hikesRepo = require('../../hikes/repository');
 const { prisma } = require('../../../shared/prisma');
+const { canReviewHike } = require('../../../shared/dateUtils');
 
 const router = Router();
 
@@ -28,28 +29,32 @@ router.post('/', requireRole(['hiker','guide','admin']), async (req, res, next) 
     const hasBooking = (bookings || []).length > 0;
     if (!hasBooking) return res.status(403).json({ error: 'You must have joined this hike to review it' });
 
-    // Verify hike is in the past
+    // Verify hike exists
     const hike = await hikesRepo.getHikeById(String(hikeId));
     if (!hike) return res.status(404).json({ error: 'Hike not found' });
     
-    // Check if hike is in the past by combining date and meetingTime (matching frontend logic)
+    // Check if hike date has occurred (timezone-safe calendar day comparison)
     const hikeDate = hike.date || hike.createdAt || null;
-    if (hikeDate) {
-      const hikeDateObj = new Date(hikeDate);
-      
-      // If meetingTime exists, combine it with the date
-      if (hike.meetingTime) {
-        const [hours, minutes] = hike.meetingTime.split(':').map(Number);
-        hikeDateObj.setHours(hours, minutes, 0, 0);
-      } else {
-        // If no time specified, set to end of day so hike is considered upcoming until end of day
-        hikeDateObj.setHours(23, 59, 59, 999);
-      }
-      
-      // Check if hike time has passed
-      if (hikeDateObj >= new Date()) {
-        return res.status(400).json({ error: 'You can only review hikes after they have occurred' });
-      }
+    
+    // Debug logging for date comparison issue
+    console.log('[reviews/post] Debug date comparison:', {
+      hikeId: String(hikeId),
+      hikeDateRaw: hikeDate,
+      hikeDateType: typeof hikeDate,
+      hikeDateValue: hikeDate ? new Date(hikeDate).toISOString() : null,
+      hikeCreatedAt: hike.createdAt ? new Date(hike.createdAt).toISOString() : null,
+      serverTime: new Date().toISOString(),
+      serverTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      canReview: canReviewHike(hikeDate),
+    });
+    
+    if (!canReviewHike(hikeDate)) {
+      console.error('[reviews/post] Review blocked - hike date check failed:', {
+        hikeId: String(hikeId),
+        hikeDate: hikeDate ? new Date(hikeDate).toISOString() : null,
+        currentDate: new Date().toISOString(),
+      });
+      return res.status(400).json({ error: 'You can only review hikes after they have occurred' });
     }
 
     // Prevent duplicate review by same user for this hike

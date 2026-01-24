@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth, onAuthStateChanged } from '../firebase';
 import api from '../api';
@@ -7,6 +7,8 @@ import './Header.css';
 export default function Header({ onOpenAuthModal }) {
   const [user, setUser] = useState(auth.currentUser);
   const [userRole, setUserRole] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuContainerRef = useRef(null);
   const navigate = useNavigate();
 
   const fetchUserRole = useCallback(async () => {
@@ -27,6 +29,18 @@ export default function Header({ onOpenAuthModal }) {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
+      const holdForSignup = localStorage.getItem('holdHeaderForSignup') === '1';
+
+      if (holdForSignup) {
+        // Keep header in visitor state while signup flow signs out immediately
+        if (!u) {
+          localStorage.removeItem('holdHeaderForSignup');
+        }
+        setUser(null);
+        setUserRole(null);
+        return;
+      }
+
       setUser(u);
 
       if (u) {
@@ -42,14 +56,38 @@ export default function Header({ onOpenAuthModal }) {
 
   // On hard reload where auth.currentUser is already set
   useEffect(() => {
-    if (auth.currentUser) fetchUserRole();
+    const holdForSignup = localStorage.getItem('holdHeaderForSignup') === '1';
+    if (!holdForSignup && auth.currentUser) fetchUserRole();
   }, [fetchUserRole]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const handleClickOutside = (event) => {
+      if (menuContainerRef.current && !menuContainerRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+
+    // Use capture phase to handle clicks before they bubble
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuOpen]);
 
   async function handleSignOut() {
     try {
       await auth.signOut();
       setUserRole(null);
-      navigate('/explore');
+      // Redirect based on previous role
+      if (userRole === 'admin') {
+        navigate('/admin/access');
+      } else {
+        navigate('/explore');
+      }
     } catch (err) {
       console.error('Sign-out failed:', err);
       alert(err.message || 'Sign-out failed');
@@ -59,30 +97,16 @@ export default function Header({ onOpenAuthModal }) {
   const isVisitor = !user;
   const isGuide = userRole === 'guide';
   const isHiker = userRole === 'hiker';
+  const isAdmin = userRole === 'admin';
 
   return (
     <header className="header">
       <div className="header-left">
-        <Link to="/explore" className="logo">TrailHub</Link>
+        <Link to={isAdmin ? "/admin" : "/explore"} className="logo">
+          <img src="/exploreicon.png" alt="TrailHub" className="logo-image" />
+          <span className="logo-text">TrailHub</span>
+        </Link>
       </div>
-
-      <nav className="nav-links">
-        <Link to="/explore">Home</Link>
-
-        {isGuide && (
-          <>
-            <Link to="/hikes/create">Create Hike</Link>
-            <Link to="/mytrails">My Trails</Link>
-          </>
-        )}
-
-        {isHiker && (
-          <>
-            <Link to="/mytrails">My Trails</Link>
-          </>
-        )}
-
-      </nav>
 
       <div className="header-right">
         {isVisitor && (
@@ -98,19 +122,39 @@ export default function Header({ onOpenAuthModal }) {
 
         {!isVisitor && (
           <>
-            <Link to={isGuide ? "/profile/guide" : "/profile/hiker"} className="profile-icon-link">
-              {user?.photoURL ? (
-                <img src={user.photoURL} alt="profile" className="profile-avatar" />
-              ) : (
-                <div className="profile-avatar-placeholder">
-                  {(user?.displayName?.[0] || user?.email?.[0] || 'U')}
-                </div>
-              )}
-            </Link>
-
-            <button onClick={handleSignOut} className="btn-signout">
-              Sign Out
-            </button>
+            {(isGuide || isHiker) && (
+              <div className="menu-container" ref={menuContainerRef}>
+                <button onClick={() => setMenuOpen(!menuOpen)} className="hamburger-btn">
+                  <div className="hamburger-line"></div>
+                  <div className="hamburger-line"></div>
+                  <div className="hamburger-line"></div>
+                </button>
+                {menuOpen && (
+                  <div className="dropdown-menu">
+                    {isGuide && (
+                      <Link to="/hikes/create" className="dropdown-item" onClick={() => setMenuOpen(false)}>
+                        Create Hike
+                      </Link>
+                    )}
+                    <Link to="/mytrails" className="dropdown-item" onClick={() => setMenuOpen(false)}>
+                      My Trails
+                    </Link>
+                    <Link to={isGuide ? "/profile/guide" : "/profile/hiker"} className="dropdown-item" onClick={() => setMenuOpen(false)}>
+                      Profile
+                    </Link>
+                    <button onClick={() => { handleSignOut(); setMenuOpen(false); }} className="dropdown-item dropdown-signout">
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {isAdmin && (
+              <button onClick={handleSignOut} className="btn-signout">
+                Sign Out
+              </button>
+            )}
           </>
         )}
       </div>

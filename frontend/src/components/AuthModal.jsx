@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import './authModal.css';
 import api from '../api';
 import {
@@ -15,7 +16,10 @@ const MIN_PASSWORD_LENGTH = 8;
 const MAX_NAME_LENGTH = 100;
 
 export default function AuthModal({ open, onClose, initialTab = 'login' }) {
+  const modalRef = useRef(null);
+  const previouslyFocused = useRef(null);
   const [manualTab, setManualTab] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,6 +46,90 @@ export default function AuthModal({ open, onClose, initialTab = 'login' }) {
       setSelectedRole('hiker');
     }
   }, [open, initialTab]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    previouslyFocused.current = document.activeElement;
+
+    const header = document.querySelector('header');
+    if (header) {
+      header.setAttribute('aria-hidden', 'true');
+      header.setAttribute('inert', '');
+    }
+
+    const getFocusable = () => {
+      if (!modalRef.current) return [];
+      const focusableSelectors = [
+        'button',
+        '[href]',
+        'input',
+        'select',
+        'textarea',
+        '[tabindex]:not([tabindex="-1"])',
+      ].join(',');
+
+      return Array.from(modalRef.current.querySelectorAll(focusableSelectors))
+        .filter((el) => !el.disabled && el.offsetParent !== null);
+    };
+
+    const focusable = getFocusable();
+    if (focusable.length) {
+      focusable[0].focus();
+    }
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose?.();
+        return;
+      }
+
+      if (e.key !== 'Tab') return;
+
+      const items = getFocusable();
+      if (!items.length) return;
+
+      const first = items[0];
+      const last = items[items.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    const handleFocusCapture = (e) => {
+      if (modalRef.current && !modalRef.current.contains(e.target)) {
+        const items = getFocusable();
+        if (items.length) {
+          items[0].focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('focus', handleFocusCapture, true);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('focus', handleFocusCapture, true);
+
+      if (header) {
+        header.removeAttribute('aria-hidden');
+        header.removeAttribute('inert');
+      }
+
+      if (previouslyFocused.current && previouslyFocused.current.focus) {
+        previouslyFocused.current.focus();
+      }
+    };
+  }, [open, onClose]);
 
   const tab = manualTab !== null ? manualTab : (initialTab || 'login');
 
@@ -105,6 +193,20 @@ export default function AuthModal({ open, onClose, initialTab = 'login' }) {
 
     let isValid = true;
 
+    if (!email.trim()) {
+      setEmailError('Email is required');
+      isValid = false;
+    } else {
+      isValid = validateEmail(email) && isValid;
+    }
+
+    if (!password.trim()) {
+      setPasswordError('Password is required');
+      isValid = false;
+    } else {
+      isValid = validatePassword(password) && isValid;
+    }
+
     if (tab === 'signup') {
       if (!fullName.trim()) {
         setNameError('Name is required');
@@ -113,9 +215,6 @@ export default function AuthModal({ open, onClose, initialTab = 'login' }) {
         isValid = validateName(fullName) && isValid;
       }
     }
-
-    isValid = validateEmail(email) && isValid;
-    isValid = validatePassword(password) && isValid;
 
     if (!isValid) return;
 
@@ -126,16 +225,12 @@ export default function AuthModal({ open, onClose, initialTab = 'login' }) {
         await signInWithEmailAndPassword(auth, email, password);
         
         // SECURITY: Check if logged-in user is admin (by UID) and reject
+        // We need to check BEFORE signing out to avoid race conditions with route guards
+        let isAdmin = false;
         try {
           const profileRes = await api.get('/me');
           const userRole = profileRes?.data?.role;
-          
-          if (userRole === 'admin') {
-            await auth.signOut();
-            setFormError('Administrator accounts cannot login here. Please use the admin portal.');
-            setLoading(false);
-            return;
-          }
+          isAdmin = userRole === 'admin';
         } catch (checkError) {
           // If account is deleted, sign out immediately and show error
           if (checkError?.response?.status === 401 && 
@@ -148,11 +243,23 @@ export default function AuthModal({ open, onClose, initialTab = 'login' }) {
           // Other errors are non-fatal for login flow
         }
         
+        // If admin detected, sign out immediately and show generic error
+        // This prevents any route guards from redirecting
+        if (isAdmin) {
+          await auth.signOut();
+          // Clear form error and show generic error message like a normal failed login
+          setFormError('');
+          setPasswordError('Invalid email or password');
+          setLoading(false);
+          return;
+        }
+        
         onClose();
         return;
       }
 
       // SIGNUP flow
+      localStorage.setItem('holdHeaderForSignup', '1');
       const userCred = await createUserWithEmailAndPassword(auth, email, password);
       
       // SECURITY: Check if created user's UID is admin and reject
@@ -195,6 +302,7 @@ export default function AuthModal({ open, onClose, initialTab = 'login' }) {
 
       // Optional: if you WANT manual login after signup, sign out here:
       await auth.signOut();
+      localStorage.removeItem('holdHeaderForSignup');
 
       // Switch to login tab, keep email filled, clear password
       setManualTab('login');
@@ -206,6 +314,7 @@ export default function AuthModal({ open, onClose, initialTab = 'login' }) {
       setEmailError('');
       setFormError('');
     } catch (err) {
+      localStorage.removeItem('holdHeaderForSignup');
       console.error('Auth error', err);
 
       const code = err?.code;
@@ -216,8 +325,14 @@ export default function AuthModal({ open, onClose, initialTab = 'login' }) {
         setEmailError('Please enter a valid email address');
       } else if (code === 'auth/weak-password') {
         setPasswordError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
-      } else if (code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+      } else if (code === 'auth/wrong-password' || code === 'auth/user-not-found' || code === 'auth/invalid-credential') {
         setPasswordError('Invalid email or password');
+      } else if (code === 'auth/user-disabled') {
+        setFormError('This account has been disabled. Contact support if you believe this is an error.');
+      } else if (code === 'auth/too-many-requests') {
+        setFormError('Too many failed attempts. Try again later or reset your password.');
+      } else if (code === 'auth/network-request-failed') {
+        setFormError('Network error. Check your connection and try again.');
       } else if (code === 'auth/configuration-not-found') {
         setFormError(
           'Firebase Auth is not configured. Enable Email/Password in Firebase Console (Authentication → Sign-in method).'
@@ -237,8 +352,20 @@ export default function AuthModal({ open, onClose, initialTab = 'login' }) {
   };
 
   return (
-    <div className="auth-modal-overlay" onClick={onClose}>
-      <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="auth-modal-overlay"
+      onClick={onClose}
+      aria-hidden={!open}
+    >
+      <div
+        className="auth-modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Authentication"
+        tabIndex="-1"
+        ref={modalRef}
+      >
         <button className="auth-modal-close" onClick={onClose}>×</button>
         <h3 className="auth-modal-title">Welcome to TrailHub</h3>
 
@@ -261,7 +388,7 @@ export default function AuthModal({ open, onClose, initialTab = 'login' }) {
 
         {formError && <div className="auth-error" style={{ marginBottom: 10 }}>{formError}</div>}
 
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
           {tab === 'signup' && (
             <>
               <label className="auth-label">Full Name</label>
@@ -295,28 +422,39 @@ export default function AuthModal({ open, onClose, initialTab = 'login' }) {
                 validateEmail(value);
               }
             }}
+            onBlur={() => validateEmail(email)}
             placeholder="your@email.com"
             maxLength={MAX_EMAIL_LENGTH}
-            required
           />
           {emailError && <div className="auth-error">{emailError}</div>}
 
           <label className="auth-label">Password</label>
-          <input
-            className={`auth-input ${passwordError ? 'auth-input-error' : ''}`}
-            type="password"
-            value={password}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value.length <= MAX_PASSWORD_LENGTH) {
-                setPassword(value);
-                validatePassword(value);
-              }
-            }}
-            placeholder="********"
-            maxLength={MAX_PASSWORD_LENGTH}
-            required
-          />
+          <div className="auth-password-container">
+            <input
+              className={`auth-input ${passwordError ? 'auth-input-error' : ''}`}
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value.length <= MAX_PASSWORD_LENGTH) {
+                  setPassword(value);
+                  validatePassword(value);
+                }
+              }}
+              onBlur={() => validatePassword(password)}
+              placeholder="********"
+              maxLength={MAX_PASSWORD_LENGTH}
+            />
+            <button
+              type="button"
+              className="auth-password-toggle"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              tabIndex={0}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
           {passwordError && <div className="auth-error">{passwordError}</div>}
 
           {tab === 'signup' && (

@@ -61,16 +61,33 @@ async function listHikes(filters = {}) {
     const and = [];
 
     // Difficulty enum: EASY / MODERATE / HARD
-    if (difficulty) {
-      const diff = String(difficulty).toLowerCase();
-      const enumValue =
-        diff === "easy" ? "EASY" :
-        diff === "moderate" ? "MODERATE" :
-        diff === "hard" ? "HARD" :
-        null;
-
-      if (enumValue) and.push({ difficulty: enumValue });
+if (difficulty) {
+  console.log("[listHikes] Difficulty filter received:", difficulty);
+  
+  // Split by comma if it's a comma-separated string
+  const difficulties = String(difficulty).toLowerCase().split(',');
+  
+  // Create OR conditions for each valid difficulty
+  const difficultyConditions = [];
+  
+  difficulties.forEach(diff => {
+    const trimmed = diff.trim();
+    if (trimmed === "easy") {
+      difficultyConditions.push({ difficulty: "EASY" });
+    } else if (trimmed === "moderate") {
+      difficultyConditions.push({ difficulty: "MODERATE" });
+    } else if (trimmed === "hard") {
+      difficultyConditions.push({ difficulty: "HARD" });
     }
+  });
+  
+  // Only add filter if we have valid conditions
+  if (difficultyConditions.length > 0) {
+    and.push({ OR: difficultyConditions });
+  }
+  
+  console.log("[listHikes] Difficulty conditions:", difficultyConditions);
+}
 
     // Price range
     if (priceFrom !== undefined && priceFrom !== null && !isNaN(priceFrom)) {
@@ -113,6 +130,8 @@ async function listHikes(filters = {}) {
       });
     }
 
+    // Always exclude deleted hikes from Explore
+    and.push({ status: { not: 'DELETED' } });
     const where = and.length ? { AND: and } : {};
 
     console.log("[listHikes] Prisma where clause:", JSON.stringify(where, null, 2));

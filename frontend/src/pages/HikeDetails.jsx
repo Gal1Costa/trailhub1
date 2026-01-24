@@ -5,7 +5,7 @@ import api from "../api";
 import ReviewCard from "../components/ReviewCard";
 import EditHikeForm from "../components/EditHikeForm";
 import MapRoute from '../components/create/MapRoute';
-import { MapContainer, TileLayer, Polyline, Marker, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Polyline, Marker, useMap } from "react-leaflet";
 import { createDestinationMarkers, createStartEndMarkers } from "../utils/mapUtils.jsx";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -23,6 +23,20 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+// Component to fit map bounds to route
+function FitBounds({ positions }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (positions && positions.length > 0) {
+      const bounds = L.latLngBounds(positions);
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [map, positions]);
+  
+  return null;
+}
+
 export default function HikeDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -38,6 +52,7 @@ export default function HikeDetails() {
   const [editMode, setEditMode] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   // Listen for auth state changes
   useEffect(() => {
@@ -120,6 +135,23 @@ export default function HikeDetails() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authReady, id, user]);
 
+  // Make header inactive when delete confirmation dialog opens (same as AuthModal)
+  useEffect(() => {
+    if (!deleteConfirmOpen) return;
+
+    const header = document.querySelector('header');
+    if (header) {
+      header.setAttribute('aria-hidden', 'true');
+      header.setAttribute('inert', '');
+    }
+
+    return () => {
+      if (header) {
+        header.removeAttribute('aria-hidden');
+        header.removeAttribute('inert');
+      }
+    };
+  }, [deleteConfirmOpen]);
 
   const joinedSet = useMemo(() => new Set(joinedIds), [joinedIds]);
   
@@ -237,7 +269,11 @@ export default function HikeDetails() {
   const backLabel = fromProfile ? 'Back to Profile' : 'Back to Explore';
 
   async function handleDelete() {
-    if (!window.confirm('Are you sure you want to delete this hike? This cannot be undone.')) return;
+    setDeleteConfirmOpen(true);
+  }
+
+  async function confirmDelete() {
+    setDeleteConfirmOpen(false);
     setDeleting(true);
     try {
       const response = await api.delete(`/hikes/${hike.id}`);
@@ -258,7 +294,7 @@ export default function HikeDetails() {
       <div className="hike-details-wrapper">
         {/* Green background visible with image container shadow */}
         {hike.imageUrl && (
-          <div style={{ position: 'relative', marginLeft: -20, marginRight: -20, marginTop: 20, borderRadius: 12, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}>
+          <div className="cover-image-container" style={{ position: 'relative', marginLeft: -20, marginRight: -20, marginTop: 20, borderRadius: 12, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.12)' }}>
             <img 
               src={`${hike.imageUrl.startsWith('/') ? `${api.defaults.baseURL}${hike.imageUrl}` : hike.imageUrl}${hike.imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`}
               alt={hike.title || hike.name} 
@@ -273,9 +309,9 @@ export default function HikeDetails() {
 
       {/* Content container with padding */}
       <div style={{ padding: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20, alignItems: 'start' }}>
+        <div className="hike-details-grid">
           {/* Left (main) column */}
-          <div>
+          <div className="main-content-mobile">
             {/* Title below image */}
             <h2 style={{ marginTop: 8 }}>{hike.name || hike.title || "Untitled hike"}</h2>
 
@@ -341,7 +377,7 @@ export default function HikeDetails() {
           {!editMode && Array.isArray(hike.route) && hike.route.length > 0 && (
             <div style={{ marginTop: 18 }}>
               <h3 style={{ marginTop: 0 }}>Route Map</h3>
-              <div style={{ height: 360, width: '100%', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
+              <div className="hike-map" style={{ height: 360, width: '100%', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
                 <MapContainer
                   key={`map-${hike.id}-${JSON.stringify(hike.route)}`}
                   center={
@@ -353,6 +389,7 @@ export default function HikeDetails() {
                   style={{ height: '100%', width: '100%' }}
                 >
                   <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="© OpenStreetMap contributors" />
+                  <FitBounds positions={hike.route} />
                   <Polyline positions={hike.route} color="#2d6a4f" weight={4} opacity={0.8} />
                   {createStartEndMarkers(hike.route)}
                 </MapContainer>
@@ -408,7 +445,10 @@ export default function HikeDetails() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8, marginTop: 8 }}>
                 {activeParticipants.map((p) => (
                   <button key={p.id} onClick={() => {
-                    // If participant is a guide, open guide profile; otherwise open hiker profile
+                    if (!user) {
+                      window.dispatchEvent(new CustomEvent('openAuthModal', { detail: { tab: 'login' } }));
+                      return;
+                    }
                     if (p.guideId) {
                       navigate('/profile/guide', { state: { guideId: p.guideId, guideName: p.name, guidePhoto: p.photoUrl } });
                     } else {
@@ -422,7 +462,7 @@ export default function HikeDetails() {
                         <span>{(p.name || 'P').charAt(0).toUpperCase()}</span>
                       )}
                     </div>
-                    <div style={{ textAlign: 'left' }}>{p.name}</div>
+                    <div className="participant-name" style={{ textAlign: 'left' }}>{p.name}</div>
                   </button>
                 ))}
               </div>
@@ -441,7 +481,7 @@ export default function HikeDetails() {
           </div>
 
           {/* Right (sidebar) column */}
-          <aside style={{ width: '100%' }}>
+          <aside className="right-section-mobile" style={{ width: '100%' }}>
             {/* Join / leave container */}
             {isCreator ? (
               <div style={{ marginBottom: 12, padding: 12, borderRadius: 8, background: '#fff', border: '1px solid #e5e7eb', textAlign: 'center', color: '#2d6a4f', fontWeight: 500 }}>
@@ -503,7 +543,14 @@ export default function HikeDetails() {
               </div>
 
               <div style={{ marginTop: 12 }}>
-                <button onClick={() => { const guideId = hike.guide?.id || null; navigate('/profile/guide', { state: { guideId, guideName: hike.guide?.user?.name, guidePhoto: hike.guide?.user?.photoUrl } }); }} className="btn-primary" style={{ width: '100%', background: '#fff', color: '#2d6a4f', border: '1px solid #e5e7eb' }}>
+                <button onClick={() => {
+                  if (!user) {
+                    window.dispatchEvent(new CustomEvent('openAuthModal', { detail: { tab: 'login' } }));
+                    return;
+                  }
+                  const guideId = hike.guide?.id || null;
+                  navigate('/profile/guide', { state: { guideId, guideName: hike.guide?.user?.name, guidePhoto: hike.guide?.user?.photoUrl } });
+                }} className="btn-primary" style={{ width: '100%', background: '#fff', color: '#2d6a4f', border: '1px solid #e5e7eb' }}>
                   View Profile
                 </button>
               </div>
@@ -628,6 +675,108 @@ export default function HikeDetails() {
                 deleting={deleting}
               />
           )}
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirmOpen && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 11000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: '12px',
+            padding: '32px',
+            maxWidth: '480px',
+            width: '100%',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '20px'
+            }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                background: '#fee2e2',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px'
+              }}>⚠️</div>
+              <h3 style={{
+                margin: 0,
+                fontSize: '20px',
+                fontWeight: '700',
+                color: '#0f172a'
+              }}>Delete Hike?</h3>
+            </div>
+            
+            <p style={{
+              margin: '0 0 24px 0',
+              fontSize: '15px',
+              color: '#64748b',
+              lineHeight: '1.6'
+            }}>
+              Are you sure you want to delete <strong style={{ color: '#0f172a' }}>"{hike?.title}"</strong>? 
+              This will remove all participants from this hike. Reviews will be preserved.
+            </p>
+
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                onClick={() => setDeleteConfirmOpen(false)}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  border: '1px solid #e5e7eb',
+                  background: '#fff',
+                  color: '#374151',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.background = '#f9fafb'}
+                onMouseLeave={(e) => e.target.style.background = '#fff'}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleting}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: '#dc2626',
+                  color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  opacity: deleting ? 0.6 : 1,
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => !deleting && (e.target.style.background = '#b91c1c')}
+                onMouseLeave={(e) => !deleting && (e.target.style.background = '#dc2626')}
+              >
+                {deleting ? 'Deleting...' : 'Delete Hike'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
       </div>

@@ -76,11 +76,13 @@
 }
 
 /* Date Range */
+/* Date Range - FIXED HEIGHT */
 .date-range-wrapper {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   width: 100%;
+  align-items: center; /* Ensure vertical alignment */
 }
 
 .date-input-wrapper {
@@ -88,6 +90,7 @@
   display: flex;
   align-items: center;
   min-width: 0;
+  height: 40px; 
 }
 
 .date-icon {
@@ -99,13 +102,23 @@
   pointer-events: auto;
   cursor: pointer;
   z-index: 1;
+  margin: 0;
 }
 
 .date-input {
   width: 100%;
-  padding: 10px 16px;
+  height: 100%; 
+  padding: 0 16px;
   padding-left: 40px;
   min-width: 0;
+  box-sizing: border-box; 
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  color: #111827;
+  transition: all 0.15s ease;
+  line-height: 1.5;
 }
 
 /* Improve native date picker appearance consistency */

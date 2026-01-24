@@ -406,3 +406,79 @@
   border: 1px solid #fecaca;
   border-radius: 6px;
 }
+
+/* Responsive Design - Mobile and Tablet */
+@media (max-width: 768px) {
+  /* Issue 1: Center mode toggle tabs on smaller screens */
+  .mode-toggle {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .mode-toggle-btn {
+    flex: 0 1 auto;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8125rem;
+  }
+
+  /* Issue 2: Fix destination input field overflow on mobile */
+  .destination-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 0.5rem;
+  }
+
+  .destination-name-input {
+    flex: 1 1 100%;
+    min-width: 0;
+    padding: 0.375rem 0.625rem;
+    font-size: 0.8125rem;
+  }
+
+  .destination-coords {
+    flex: 1 1 auto;
+    font-size: 0.7rem;
+  }
+
+  .destination-delete-btn {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small screens - further optimize spacing */
+  .mode-toggle {
+    gap: 0.5rem;
+    padding: 0.25rem;
+  }
+
+  .mode-toggle-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .destination-row {
+    gap: 0.375rem;
+    padding: 0.5rem 0.375rem;
+  }
+
+  .destination-name-input {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .destination-coords {
+    font-size: 0.65rem;
+  }
+
+  .drag-handle,
+  .destination-number-badge {
+    width: 20px;
+    height: 20px;
+  }
+
+  .destination-number-badge {
+    font-size: 0.65rem;
+  }
+}

@@ -115,14 +115,26 @@ export default function EditHikeForm({ hike, onSave, onCancel, onDelete, deletin
     const elevationGainValue = parseFloat(String(trail.elevationGain).replace(/[^\d.]/g, '')) || 0;
     const difficulty = basic.difficulty || 'MODERATE';
     
+    // Only update distance if user hasn't manually edited it
     if (!manuallyEditedRef.current.distance) {
-      setTrail(prev => ({ 
-        ...prev, 
-        distance: distanceKm.toFixed(1),
-        _distanceAutoCalculated: true 
-      }));
+      const newDistance = parseFloat(distanceKm.toFixed(1));
+      const currentDistance = trail.distance;
+      const currentDistanceNum = typeof currentDistance === 'number' ? currentDistance : parseFloat(currentDistance);
+      
+      // Only update if the value would actually change (use threshold to avoid floating point precision issues)
+      const shouldUpdate = currentDistance === '' || currentDistance === null || currentDistance === undefined || trail._distanceAutoCalculated;
+      const valueChanged = isNaN(currentDistanceNum) || Math.abs(currentDistanceNum - newDistance) > 0.01;
+      
+      if (shouldUpdate && valueChanged) {
+        setTrail(prev => ({ 
+          ...prev, 
+          distance: newDistance,
+          _distanceAutoCalculated: true 
+        }));
+      }
     }
     
+    // Only update duration if user hasn't manually edited it and it's not multi-day
     if (!manuallyEditedRef.current.duration && !trail.isMultiDay) {
       const durationHours = calculateRouteDuration(routePoints, elevationGainValue, difficulty);
       if (durationHours > 0) {
@@ -132,12 +144,17 @@ export default function EditHikeForm({ hike, onSave, onCancel, onDelete, deletin
         if (mins > 0) formatted += `-${hours + 1}`;
         formatted += ' hours';
         
-        setTrail(prev => ({ 
-          ...prev, 
-          duration: formatted,
-          durationHours: formatted,
-          _durationHoursAutoCalculated: true 
-        }));
+        const currentDuration = trail.duration || trail.durationHours;
+        
+        // Only update if the value would actually change
+        if (currentDuration !== formatted && (currentDuration === '' || currentDuration === null || currentDuration === undefined || trail._durationHoursAutoCalculated)) {
+          setTrail(prev => ({ 
+            ...prev, 
+            duration: formatted,
+            durationHours: formatted,
+            _durationHoursAutoCalculated: true 
+          }));
+        }
       }
     }
   }, [routeChangeKey, trail.elevationGain, basic.difficulty, trail.isMultiDay]);
@@ -153,7 +170,7 @@ export default function EditHikeForm({ hike, onSave, onCancel, onDelete, deletin
       routePoints: route.points?.length,
       destinations: route.destinations?.length,
       mapMode: route.mapMode,
-      hasNewImage: !!(cover.croppedFile || cover.coverFile),
+      hasNewImage: !!cover.coverFile,
       capacity: basic.capacity
     });
     
@@ -189,7 +206,6 @@ export default function EditHikeForm({ hike, onSave, onCancel, onDelete, deletin
       cover: {
         previewUrl: cover.previewUrl,
         coverFile: cover.coverFile,
-        croppedFile: cover.croppedFile,
       }
     };
     
@@ -265,7 +281,7 @@ export default function EditHikeForm({ hike, onSave, onCancel, onDelete, deletin
       }
       
       // Add cover image if changed
-      const imageFileToUpload = cover.croppedFile || cover.coverFile;
+      const imageFileToUpload = cover.coverFile;
       if (imageFileToUpload) {
         console.log('[EditHikeForm] Adding image to FormData:', {
           fileName: imageFileToUpload.name,
@@ -292,15 +308,11 @@ export default function EditHikeForm({ hike, onSave, onCancel, onDelete, deletin
         hasCoverUrl: !!response.data.coverUrl
       });
       
-      // Success - show message
-      setSuccessMessage('Hike updated successfully! ✓');
       setSubmitting(false);
       
-      // Brief delay to show success message before closing
-      setTimeout(() => {
-        console.log('[EditHikeForm] Calling onSave callback to reload page');
-        onSave?.();
-      }, 600);
+      // Call onSave callback immediately to trigger parent reload/navigation
+      console.log('[EditHikeForm] Calling onSave callback');
+      onSave?.();
     } catch (e) {
       console.error('Edit hike failed:', e);
       setErr(e?.response?.data?.error || e?.response?.data?.message || e.message || 'Failed to update hike');

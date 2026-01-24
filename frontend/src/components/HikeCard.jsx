@@ -14,6 +14,7 @@ export default function HikeCard({
   userProfile = null,
   fromProfile = false,
   needsReview = false,
+  isPublicView = false,
 }) {
   const navigate = useNavigate();
   const user = auth.currentUser;
@@ -120,38 +121,46 @@ export default function HikeCard({
   let disabled = true;
   let buttonAction = null;
   let btnClass = '';
+  let showButton = true; // Whether to show the second button (Leave/Your Hike/etc)
 
   if (isPast) {
     buttonLabel = 'Past';
     disabled = true;
     btnClass = 'past';
+    showButton = true; // Show Past button even in public view
   } else if (isCreator) {
     buttonLabel = 'Your Hike';
     disabled = true;
     btnClass = 'your-hike';
+    showButton = !isPublicView; // Hide "Your Hike" in public view
   } else if (isJoined) {
     if (allowLeave) {
       buttonLabel = 'Leave';
       disabled = false;
       buttonAction = onLeave;
       btnClass = 'leave';
+      showButton = !isPublicView; // Hide "Leave" in public view
     } else {
       buttonLabel = 'Joined';
       disabled = true;
       btnClass = 'joined';
+      showButton = !isPublicView; // Hide "Joined" in public view
     }
   } else if (isFull) {
     buttonLabel = 'Full';
     disabled = true;
     btnClass = 'full';
+    showButton = true; // Show "Full" even in public view
   } else {
     if (allowJoin) {
       buttonLabel = 'Join';
       disabled = false;
       buttonAction = onJoin;
       btnClass = 'join';
+      showButton = true; // Always show Join button
     } else {
       buttonLabel = '';
+      showButton = false;
     }
   }
 
@@ -248,10 +257,13 @@ export default function HikeCard({
       </div>
 
       <div className="hike-actions">
-        <button className="view-details-btn" onClick={(e) => { e.stopPropagation(); handleView(); }}>
+        <button 
+          className={`view-details-btn ${!showButton ? 'view-details-btn-full-width' : ''}`} 
+          onClick={(e) => { e.stopPropagation(); handleView(); }}
+        >
           View Details
         </button>
-        {buttonLabel && (
+        {buttonLabel && showButton && (
           <button
             className={`join-btn ${btnClass}`}
             onClick={(e) => {

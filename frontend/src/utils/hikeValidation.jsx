@@ -117,12 +117,12 @@ export function validateHikeForm(formData) {
   }
   
   if (!basic.meetingPlace || basic.meetingPlace.trim() === '') {
-    basicErrors.meetingPlace = 'Meeting place is required';
-  } else if (basic.meetingPlace.trim().length < 5) {
-    basicErrors.meetingPlace = 'Meeting place must be at least 5 characters';
-  } else if (basic.meetingPlace.trim().length > 500) {
-    basicErrors.meetingPlace = 'Meeting place must be less than 500 characters';
-  }
+  basicErrors.meetingPlace = 'Meeting place is required';
+} else if (basic.meetingPlace.trim().length > 500) {
+  basicErrors.meetingPlace = 'Meeting place must be less than 500 characters';
+} else {
+  delete basicErrors.meetingPlace;
+}
   
   // Default to EASY if not provided
   const difficulty = basic.difficulty || 'EASY';
@@ -162,8 +162,11 @@ export function validateHikeForm(formData) {
     }
   }
   
-  if (basic.location && basic.location.trim().length > 200) {
-    basicErrors.location = 'Location must be less than 200 characters';
+  // Location validation (REQUIRED)
+  if (!basic.location || basic.location.trim() === '') {
+      basicErrors.location = 'Location is required';
+  } else if (basic.location.trim().length > 200) {
+      basicErrors.location = 'Location must be less than 200 characters';
   }
   
   if (Object.keys(basicErrors).length > 0) {
@@ -355,7 +358,6 @@ export function validateField(section, fieldName, value, allFormData = {}) {
         
         case 'meetingPlace':
           if (!value || value.trim() === '') return 'Meeting place is required';
-          if (value.trim().length < 5) return 'Meeting place must be at least 5 characters';
           if (value.trim().length > 500) return 'Meeting place must be less than 500 characters';
           return null;
         
@@ -399,8 +401,11 @@ export function validateField(section, fieldName, value, allFormData = {}) {
           return null;
         
         case 'location':
-          if (value && value.trim().length > 200) {
-            return 'Location must be less than 200 characters';
+          if (!value || value.trim() === '') {
+              return 'Location is required';
+          }
+          if (value.trim().length > 200) {
+              return 'Location must be less than 200 characters';
           }
           return null;
         

@@ -184,7 +184,13 @@ async function getCurrentUserProfile(firebaseUid, userInfo = null) {
   const bookings = await prisma.booking.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
-    include: { hike: true },
+    include: { 
+      hike: {
+        include: {
+          _count: { select: { bookings: true } },
+        },
+      },
+    },
   });
 
   let hikerProfile = null;
@@ -211,7 +217,13 @@ async function getCurrentUserProfile(firebaseUid, userInfo = null) {
 
   return {
     ...user,
-    bookings,
+    bookings: bookings.map((b) => ({
+      ...b,
+      hike: b.hike ? {
+        ...b.hike,
+        participantsCount: b.hike._count?.bookings ?? 0,
+      } : null,
+    })),
     ...(user.role === "hiker" && { hikerProfile }),
     ...(user.role === "guide" && {
       guide: guideProfile ? {

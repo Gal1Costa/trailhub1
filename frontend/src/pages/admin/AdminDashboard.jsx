@@ -4,12 +4,14 @@ import { auth, reauthenticateWithCredential, EmailAuthProvider, onAuthStateChang
 import DashboardCard from './components/DashboardCard';
 import Hikes from './Hikes';
 import Users from './Users';
+import { getRoleRequests } from './services/adminApi';
 import './AdminDashboard.css';
 
 export default function AdminDashboard() {
   const [overview, setOverview] = useState(null);
   const [unauthorized, setUnauthorized] = useState(false);
   const [tab, setTab] = useState('Overview');
+  const [pendingRequests, setPendingRequests] = useState(0);
   // simplified: remove reauth confirmation flow; load dashboard when overview available
 
   useEffect(() => {
@@ -19,6 +21,14 @@ export default function AdminDashboard() {
         const res = await api.get('/admin/overview');
         if (mounted) setOverview(res.data);
         if (mounted) setUnauthorized(false);
+
+        // Load pending role requests count
+        try {
+          const requests = await getRoleRequests();
+          if (mounted) setPendingRequests(requests.length);
+        } catch (err) {
+          console.warn('Failed to load role requests count', err);
+        }
       } catch (err) {
         // If not authorized, show login prompt
         const status = err?.response?.status;
@@ -87,7 +97,12 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
-      <h2>Admin Dashboard</h2>
+      <div className="dashboard-header">
+        <div>
+          <h1 className="dashboard-title">Dashboard</h1>
+          <p className="dashboard-subtitle">Welcome back! Here's an overview of your platform.</p>
+        </div>
+      </div>
 
       {unauthorized ? (
         <div className="placeholder">
@@ -101,16 +116,22 @@ export default function AdminDashboard() {
         <>
           <div className="admin-cards">
             <DashboardCard title="Total Users" value={overview?.users ?? '—'} to="/admin/users" />
-            <DashboardCard title="Total Guides" value={overview?.guides ?? overview?.hikes ?? '—'} to="/admin/users" />
+            <DashboardCard title="Total Guides" value={overview?.guides ?? overview?.hikes ?? '—'} to="/admin/guides" />
             <DashboardCard title="Total Bookings" value={overview?.bookings ?? '—'} to="/admin/hikes" />
-            <DashboardCard title="Average Rating" value={overview?.averageRating ? Number(overview.averageRating).toFixed(2) : '—'} />
+            {pendingRequests > 0 && (
+              <DashboardCard 
+                title="Role Requests" 
+                value={`${pendingRequests} 🚀`} 
+                to="/admin/role-requests"
+                highlight={true}
+              />
+            )}
           </div>
 
 
           {/* tabs are provided by AdminLayout/AdminTabs - do not duplicate here */}
 
           <div className="admin-section">
-            {tab === 'Overview' && <div className="placeholder">Overview placeholder — coming soon.</div>}
             {tab === 'Analytics' && <div className="placeholder">Analytics placeholder — coming soon.</div>}
             {tab === 'Hikes' && <Hikes />}
             {tab === 'Users' && <Users />}

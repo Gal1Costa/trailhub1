@@ -25,6 +25,7 @@ export default function GuideProfile() {
   const [completedView, setCompletedView] = useState('created');
   const tabInitializedRef = useRef(false);
   const [authReady, setAuthReady] = useState(false);
+  const [userReviews, setUserReviews] = useState([]);
 
   // Check auth and redirect if not guide
   useEffect(() => {
@@ -245,6 +246,19 @@ export default function GuideProfile() {
 
       setUpcoming(upcomingHikes);
       setPast(pastHikes);
+
+      // Load user's reviews to check which hikes need review (only for own profile)
+      if (!stateGuideId && !qsUserId) {
+        try {
+          const reviewsRes = await api.get('/reviews/user/me');
+          setUserReviews(reviewsRes.data || []);
+        } catch (e) {
+          console.warn('Failed to load user reviews:', e.message);
+          setUserReviews([]);
+        }
+      } else {
+        setUserReviews([]);
+      }
     } catch (e) {
       console.error("Failed to load profile", e);
       setErr(
@@ -271,6 +285,27 @@ export default function GuideProfile() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authReady, location.key, location.search, location.state?.guideId]);
 
+  // Make header inactive when edit modal opens (same as AuthModal)
+  useEffect(() => {
+    const header = document.querySelector('header');
+    
+    if (isEditModalOpen && header) {
+      header.setAttribute('aria-hidden', 'true');
+      header.setAttribute('inert', '');
+    } else if (header) {
+      header.removeAttribute('aria-hidden');
+      header.removeAttribute('inert');
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (header) {
+        header.removeAttribute('aria-hidden');
+        header.removeAttribute('inert');
+      }
+    };
+  }, [isEditModalOpen]);
+
   const counts = useMemo(
     () => {
       const upcomingArr = Array.isArray(upcoming) ? upcoming : [];
@@ -288,6 +323,10 @@ export default function GuideProfile() {
     },
     [upcoming, past]
   );
+
+  const hasReviewedHike = (hikeId) => {
+    return userReviews.some(review => review.hikeId === hikeId);
+  };
 
   async function handleLeave(hikeId) {
     try {
@@ -368,7 +407,7 @@ export default function GuideProfile() {
         </div>
         <div className="stat-card">
           <div className="stat-number">{counts.joined || 0}</div>
-          <div className="stat-label">Hikes Joined</div>
+          <div className="stat-label">Upcoming Joined Hikes</div>
         </div>
         <div className="stat-card">
           <div className="stat-number">{counts.total}</div>
@@ -409,10 +448,10 @@ export default function GuideProfile() {
               return (
                 <div className="empty-state">
                   {isPublicView ? (
-                    <p>No upcoming created hikes.</p>
+                    <p>No upcoming hikes created.</p>
                   ) : (
                     <>
-                      <p>You haven't created any upcoming hikes yet. Create your first hike to get started!</p>
+                      <p>No upcoming hikes created.</p>
                       <Link to="/hikes/create" className="btn-explore-hikes">
                         Create Hike
                       </Link>
@@ -433,6 +472,7 @@ export default function GuideProfile() {
                     allowLeave={false}
                     userProfile={me}
                     fromProfile={true}
+                    isPublicView={isPublicView}
                   />
                 ))}
               </div>
@@ -452,7 +492,7 @@ export default function GuideProfile() {
                     <p>No upcoming joined hikes.</p>
                   ) : (
                     <>
-                      <p>You haven't joined any hikes yet. Browse available hikes to get started!</p>
+                      <p>No upcoming joined hikes.</p>
                       <Link to="/explore" className="btn-explore-hikes">
                         Explore Hikes
                       </Link>
@@ -471,9 +511,10 @@ export default function GuideProfile() {
                     isJoined={true}
                     onLeave={(id) => handleLeave(id)}
                     allowJoin={false}
-                    allowLeave={true}
+                    allowLeave={!isPublicView}
                     userProfile={me}
                     fromProfile={true}
+                    isPublicView={isPublicView}
                   />
                 ))}
               </div>
@@ -516,6 +557,7 @@ export default function GuideProfile() {
                     allowLeave={false}
                     userProfile={me}
                     fromProfile={true}
+                    isPublicView={isPublicView}
                   />
                 ))}
               </div>
@@ -536,6 +578,8 @@ export default function GuideProfile() {
                     allowLeave={false}
                     userProfile={me}
                     fromProfile={true}
+                    needsReview={!isPublicView && !hasReviewedHike(h.id)}
+                    isPublicView={isPublicView}
                   />
                 ))}
               </div>

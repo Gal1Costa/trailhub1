@@ -8,6 +8,9 @@
   transition: all 0.3s ease;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   color: #111827;
+  width: 100%; /* ← ADD THIS: Ensure full width of grid cell */
+  height: 100%; /* ← ADD THIS: Consistent height */
+  box-sizing: border-box; /* ← ADD THIS: Include padding/border in width */
 }
 
 .hike-card .detail-item {
@@ -259,15 +262,23 @@
 .view-details-btn {
   flex: 1;
   padding: 7px 10px;
-  background: #f3f4f6; /* slightly lighter for contrast */
-  border: 1px solid #e5e7eb;
+  background: #f3f4f6 !important; /* slightly lighter for contrast */
+  border: 1px solid #e5e7eb !important;
   border-radius: 8px;
-  color: #1f2937; /* darker text */
+  color: #1f2937 !important; /* darker text */
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
   line-height: 1.5;
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.view-details-btn-full-width {
+  flex: 1 1 100% !important;
+  max-width: 100%;
 }
 
 .explore-page .hike-actions .view-details-btn {

@@ -150,6 +150,27 @@ export default function HikerProfile() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authReady, location.key, location.search, location.state?.userId]);
 
+  // Make header inactive when edit modal opens (same as AuthModal)
+  useEffect(() => {
+    const header = document.querySelector('header');
+    
+    if (isEditModalOpen && header) {
+      header.setAttribute('aria-hidden', 'true');
+      header.setAttribute('inert', '');
+    } else if (header) {
+      header.removeAttribute('aria-hidden');
+      header.removeAttribute('inert');
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (header) {
+        header.removeAttribute('aria-hidden');
+        header.removeAttribute('inert');
+      }
+    };
+  }, [isEditModalOpen]);
+
   const counts = useMemo(
     () => ({
       total: (upcoming?.length || 0) + (past?.length || 0),
@@ -234,7 +255,7 @@ export default function HikerProfile() {
       <div className="stats-container">
         <div className="stat-card">
           <div className="stat-number">{counts.total}</div>
-          <div className="stat-label">Hikes Joined</div>
+          <div className="stat-label">Upcoming Joined Hikes</div>
         </div>
         <div className="stat-card">
           <div className="stat-number">{counts.completed}</div>
@@ -270,7 +291,7 @@ export default function HikerProfile() {
           <h2 className="section-title">Upcoming Hikes</h2>
           {upcoming.length === 0 ? (
             <div className="empty-state">
-              <p>You haven't joined any hikes yet. Browse available hikes to get started!</p>
+              <p>No upcoming joined hikes.</p>
               <Link to="/explore" className="btn-explore-hikes">
                 Explore Hikes
               </Link>
@@ -284,9 +305,10 @@ export default function HikerProfile() {
                   isJoined={true}
                   onLeave={(id) => handleLeave(id)}
                   allowJoin={false}
-                  allowLeave={true}
+                  allowLeave={!isPublicView}
                   userProfile={me}
                   fromProfile={true}
+                  isPublicView={isPublicView}
                 />
               ))}
             </div>
@@ -311,7 +333,8 @@ export default function HikerProfile() {
                   allowLeave={false}
                   userProfile={me}
                   fromProfile={true}
-                  needsReview={!hasReviewedHike(h.id)}
+                  needsReview={!isPublicView && !hasReviewedHike(h.id)}
+                  isPublicView={isPublicView}
                 />
               ))}
             </div>

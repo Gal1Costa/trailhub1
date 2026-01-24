@@ -144,8 +144,22 @@ router.get('/:id', requireRole(['hiker','guide','admin']), async (req, res, next
       bookings = await prisma.booking.findMany({
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
-        include: { hike: true },
+        include: { 
+          hike: {
+            include: {
+              _count: { select: { bookings: true } },
+            },
+          },
+        },
       });
+      // Add participantsCount to hike objects
+      bookings = bookings.map((b) => ({
+        ...b,
+        hike: b.hike ? {
+          ...b.hike,
+          participantsCount: b.hike._count?.bookings ?? 0,
+        } : null,
+      }));
     } catch (bErr) {
       console.warn('[users/:id] Failed to load bookings for user', user.id, bErr.message || bErr);
       bookings = [];

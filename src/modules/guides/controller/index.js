@@ -20,9 +20,12 @@ router.get('/:id', requireRole(['visitor','hiker','guide','admin']), async (req,
       return res.status(404).json({ error: 'Guide not found' });
     }
 
-    // Get guide's created hikes (include all fields needed by frontend)
+    // Get guide's created hikes (exclude deleted hikes)
     const hikes = await prisma.hike.findMany({
-      where: { guideId: id },
+      where: { 
+        guideId: id,
+        status: { not: 'DELETED' } // Don't show deleted hikes on guide profile
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         _count: { select: { bookings: true } },
@@ -37,7 +40,13 @@ router.get('/:id', requireRole(['visitor','hiker','guide','admin']), async (req,
         hikeId: { notIn: Array.from(createdHikeIds) },
       },
       orderBy: { createdAt: 'desc' },
-      include: { hike: true },
+      include: { 
+        hike: {
+          include: {
+            _count: { select: { bookings: true } },
+          },
+        },
+      },
     });
 
     // Get guide's reviews and calculate rating
@@ -63,7 +72,13 @@ router.get('/:id', requireRole(['visitor','hiker','guide','admin']), async (req,
         ...h,
         participantsCount: h._count?.bookings ?? 0,
       })),
-      bookings: bookings, // Include joined hikes (bookings)
+      bookings: bookings.map((b) => ({
+        ...b,
+        hike: b.hike ? {
+          ...b.hike,
+          participantsCount: b.hike._count?.bookings ?? 0,
+        } : null,
+      })), // Include joined hikes (bookings) with participant counts
     };
 
     console.log('[guides/get] Returning guide response with id:', guideResponse.id);

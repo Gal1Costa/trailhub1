@@ -31,7 +31,16 @@ body,html,#root { height: 100%; }
 .admin-access-card h2{ text-align:center; margin: 6px 0 2px; color:#0f172a }
 .admin-access-card .muted{ text-align:center; color:#6b7280; font-size:13px }
 .field-label{ display:block; margin-top:12px; color:#4b5563; font-size:13px }
-.field-input{ width:100%; padding:10px 12px; border-radius:8px; border:1px solid #e6eef0; margin-top:6px; background:#fbfbfb }
+.field-input{ 
+  width:100%; 
+  padding:10px 12px; 
+  border-radius:8px; 
+  border:1px solid #e6eef0; 
+  margin-top:6px; 
+  background:#fbfbfb;
+  box-sizing: border-box;
+  text-align: left;
+}
 .demo-box{ margin-top:12px; background:#faf6f2; padding:10px 12px; border-radius:8px; color:#374151; font-size:13px; border:1px solid #f0eae2 }
 .demo-title{ font-weight:600; margin-bottom:6px }
 .error{ margin-top:10px; color:#b91c1c }

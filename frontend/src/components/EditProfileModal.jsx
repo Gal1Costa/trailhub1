@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { auth, updatePassword, updateProfile, reauthenticateWithCredential, EmailAuthProvider } from '../firebase';
+import api from '../api';
 import './EditProfileModal.css';
 
 export default function EditProfileModal({ isOpen, onClose, user, onSave, onDelete, deleteInProgress, isPublicView }) {
+  const modalRef = useRef(null);
+  const previouslyFocused = useRef(null);
   const [formData, setFormData] = useState({
     name: '',
     location: '',
@@ -15,6 +18,8 @@ export default function EditProfileModal({ isOpen, onClose, user, onSave, onDele
   const [error, setError] = useState('');
   const [needsReauth, setNeedsReauth] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [hasPendingRequest, setHasPendingRequest] = useState(false);
+  const [requestLoading, setRequestLoading] = useState(false);
 
   // Update form data when user data changes or modal opens
   useEffect(() => {
@@ -29,8 +34,123 @@ export default function EditProfileModal({ isOpen, onClose, user, onSave, onDele
       });
       setError('');
       setNeedsReauth(false);
+
+      // Check for pending role request if user is a hiker
+      if (user?.role === 'hiker') {
+        checkRoleRequestStatus();
+      }
     }
   }, [isOpen, user]);
+
+  // Focus management and keyboard trapping (same as AuthModal)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    previouslyFocused.current = document.activeElement;
+
+    const getFocusable = () => {
+      if (!modalRef.current) return [];
+      const focusableSelectors = [
+        'button',
+        '[href]',
+        'input',
+        'select',
+        'textarea',
+        '[tabindex]:not([tabindex="-1"])',
+      ].join(',');
+
+      return Array.from(modalRef.current.querySelectorAll(focusableSelectors))
+        .filter((el) => !el.disabled && el.offsetParent !== null);
+    };
+
+    const focusable = getFocusable();
+    if (focusable.length) {
+      focusable[0].focus();
+    }
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose?.();
+        return;
+      }
+
+      if (e.key !== 'Tab') return;
+
+      const items = getFocusable();
+      if (!items.length) return;
+
+      const first = items[0];
+      const last = items[items.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    const handleFocusCapture = (e) => {
+      if (modalRef.current && !modalRef.current.contains(e.target)) {
+        const items = getFocusable();
+        if (items.length) {
+          items[0].focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('focus', handleFocusCapture, true);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('focus', handleFocusCapture, true);
+
+      if (previouslyFocused.current && previouslyFocused.current.focus) {
+        previouslyFocused.current.focus();
+      }
+    };
+  }, [isOpen, onClose]);
+
+  async function checkRoleRequestStatus() {
+    try {
+      const res = await api.get('/me/role-request-status');
+      setHasPendingRequest(res?.data?.hasPendingRequest || false);
+    } catch (err) {
+      console.error('Failed to check role request status:', err);
+    }
+  }
+
+  async function handleRequestGuideRole() {
+    setRequestLoading(true);
+    try {
+      await api.post('/me/request-guide-role');
+      setHasPendingRequest(true);
+      
+      // Show success toast
+      window.dispatchEvent(new CustomEvent('app:toast', { 
+        detail: { 
+          message: '🎉 Guide role request submitted successfully! An admin will review your request soon.', 
+          type: 'success',
+          duration: 5000
+        } 
+      }));
+    } catch (err) {
+      console.error('Request guide role failed:', err);
+      window.dispatchEvent(new CustomEvent('app:toast', { 
+        detail: { 
+          message: err.response?.data?.error || 'Failed to submit request', 
+          type: 'error' 
+        } 
+      }));
+    } finally {
+      setRequestLoading(false);
+    }
+  }
 
   if (!isOpen) return null;
 
@@ -144,7 +264,15 @@ export default function EditProfileModal({ isOpen, onClose, user, onSave, onDele
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div 
+        className="modal-content" 
+        onClick={(e) => e.stopPropagation()}
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Edit Profile"
+        tabIndex="-1"
+      >
         <div className="modal-header">
           <h2>Edit Profile</h2>
           <button className="modal-close" onClick={onClose}>×</button>
@@ -240,6 +368,31 @@ export default function EditProfileModal({ isOpen, onClose, user, onSave, onDele
           )}
 
           {error && <div className="form-error">{error}</div>}
+
+          {/* Guide Role Request Section - Only for hikers */}
+          {!isPublicView && user?.role === 'hiker' && (
+            <div className="guide-request-section">
+              <div className="section-divider"></div>
+              <h3 className="section-title">Become a Guide</h3>
+              <p className="section-description">
+                Want to lead hikes? Request to become a guide and share your expertise with the community.
+              </p>
+              {hasPendingRequest ? (
+                <div className="pending-request-badge">
+                  ⏳ Guide Request Pending
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleRequestGuideRole}
+                  className="btn-request-guide"
+                  disabled={requestLoading || saving}
+                >
+                  {requestLoading ? 'Submitting...' : '🚀 Request Guide Role'}
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="form-actions">
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>

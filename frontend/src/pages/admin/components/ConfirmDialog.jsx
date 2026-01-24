@@ -27,7 +27,7 @@ export default function ConfirmDialog({ open, title, message, onConfirm, onCance
         )}
         <div className="confirm-actions" style={{ marginTop: 12 }}>
           <button className="btn" onClick={onCancel}>Cancel</button>
-          <button className="btn btn-danger" onClick={onConfirm} disabled={!canConfirm}>Confirm</button>
+          <button className="btn btn-success" onClick={onConfirm} disabled={!canConfirm}>Confirm</button>
         </div>
       </div>
     </div>

@@ -256,11 +256,11 @@ export default function BasicInformation({ value, onChange, errors = {} }) {
         {getError('meetingPlace') && <span className="field-error">{getError('meetingPlace')}</span>}
       </div>
 
-      {/* 4. Location & Capacity - Grid 2 columns, Both Optional */}
+      {/* 4. Location & Capacity - Grid 2 columns, Location Required, Capacity Required */}
       <div className="grid-row">
         <div className="field-error-container">
           <label>
-            <span className="label-text">Location</span>
+            <span className="label-text">Location <span style={{ color: '#e53e3e', fontWeight: 'bold' }}>*</span></span>
             <div className="input-wrapper">
               <MapPin className="input-icon input-icon-optional" size={16} />
               <input

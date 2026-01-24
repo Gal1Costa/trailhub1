@@ -1,7 +1,7 @@
 import "leaflet/dist/leaflet.css";
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import Explore from "./pages/Explore";
 import MyTrails from "./pages/MyTrails";
@@ -13,11 +13,14 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminAccess from "./pages/admin/AdminAccess";
 import AdminLayout from "./pages/admin/layouts/AdminLayout";
 import AdminRoute from "./pages/admin/AdminRoute";
+import ProtectedRoute from "./pages/ProtectedRoute";
 import HikesAdmin from "./pages/admin/Hikes";
+import HikeEdit from "./pages/admin/HikeEdit";
 import UsersAdmin from "./pages/admin/Users";
 import GuidesAdmin from "./pages/admin/Guides";
-import AnalyticsPlaceholder from "./pages/admin/AnalyticsPlaceholder";
-import ModerationPlaceholder from "./pages/admin/ModerationPlaceholder";
+import DeletedAccounts from "./pages/admin/DeletedAccounts";
+import RoleRequests from "./pages/admin/RoleRequests";
+import Analytics from "./pages/admin/Analytics";
 import AdminDevLogin from "./pages/admin/AdminDevLogin";
 import AdminAudit from "./pages/admin/AdminAudit";
 import ErrorBoundary from "./ErrorBoundary";
@@ -67,12 +70,10 @@ function App() {
     return () => window.removeEventListener('openAuthModal', handleOpenAuth);
   }, []);
 
-  // Listen for admin sign-in event: close modal and show toast
+  // Listen for admin sign-in event: close modal (no toast needed)
   useEffect(() => {
     const onAdminSignedIn = (e) => {
       setModalOpen(false);
-      setToast({ message: 'Admin access granted', type: 'success' });
-      setTimeout(() => setToast(null), 3500);
     };
     window.addEventListener('admin:signedin', onAdminSignedIn);
     return () => window.removeEventListener('admin:signedin', onAdminSignedIn);
@@ -104,40 +105,109 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div style={{ fontFamily: "system-ui, sans-serif", minHeight: "100vh" }}>
-        {/* Hide main site header when browsing admin pages */}
-        {typeof window !== 'undefined' && !window.location.pathname.startsWith('/admin') && (
-          <Header onOpenAuthModal={handleOpenAuthModal} />
-        )}
+      <AppContent 
+        handleOpenAuthModal={handleOpenAuthModal}
+        modalOpen={modalOpen}
+        setModalOpen={setModalOpen}
+        modalTab={modalTab}
+        modalKey={modalKey}
+        toast={toast}
+      />
+    </BrowserRouter>
+  );
+}
 
-        <div style={{ padding: 20 }}>
+function AppContent({ handleOpenAuthModal, modalOpen, setModalOpen, modalTab, modalKey, toast }) {
+  const location = useLocation();
+  const isAdminPage = location.pathname.startsWith('/admin');
 
-          <Routes>
+  return (
+    <div style={{ fontFamily: "system-ui, sans-serif", minHeight: "100vh" }}>
+      {/* Hide main site header when browsing admin pages */}
+      {!isAdminPage && (
+        <Header onOpenAuthModal={handleOpenAuthModal} />
+      )}
+
+      <div style={{ padding: isAdminPage ? 0 : 20 }}>
+
+        <Routes>
+            {/* ═══════════════════════════════════════════════════════════════
+                ADMIN ROUTING - STRICT SECURITY MODEL
+                ═══════════════════════════════════════════════════════════════
+                
+                PUBLIC ROUTE:
+                - /admin/access (login page) - ONLY public admin route
+                
+                ENTRY POINT:
+                - /admin → ALWAYS redirects to /admin/access (for everyone)
+                - This forces all users through the authentication gate
+                
+                PROTECTED ROUTES (require admin authentication):
+                - /admin/dashboard - Main admin dashboard
+                - /admin/users, /admin/hikes, /admin/guides, etc.
+                
+                SECURITY FLOW:
+                1. User visits /admin → redirect to /admin/access
+                2. /admin/access checks authentication:
+                   - Not logged in → show login form
+                   - Logged in but not admin → show login form with error
+                   - Logged in as admin → redirect to /admin/dashboard
+                3. User visits /admin/dashboard directly → AdminRoute guard:
+                   - Not admin → redirect to /admin/access
+                   - Admin → allow access
+                   
+                CRITICAL: /admin/dashboard is NEVER accessible without
+                explicit admin authentication verified by backend API.
+            ═══════════════════════════════════════════════════════════════ */}
+            
+            {/* Public admin route - login/access page (no authentication required) */}
             <Route path="/admin/access" element={<AdminAccess />} />
 
-              <Route path="/admin/dev-login" element={<AdminDevLogin />} />
+            {/* Dev login (only in development) */}
+            <Route path="/admin/dev-login" element={<AdminDevLogin />} />
 
-            <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
-              <Route index element={<Navigate to="/admin/dashboard" replace />} />
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="analytics" element={<AnalyticsPlaceholder />} />
-              <Route path="audit" element={<AdminAudit />} />
-              <Route path="hikes" element={<HikesAdmin />} />
-              <Route path="users" element={<UsersAdmin />} />
-              <Route path="guides" element={<GuidesAdmin />} />
-              <Route path="moderation" element={<ModerationPlaceholder />} />
+            {/* /admin entry point - redirect everyone to /admin/access */}
+            <Route path="/admin" element={<Navigate to="/admin/access" replace />} />
+
+            {/* Protected admin routes - ALL require AdminRoute guard */}
+            <Route path="/admin/dashboard" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+              <Route index element={<AdminDashboard />} />
+            </Route>
+            <Route path="/admin/analytics" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+              <Route index element={<Analytics />} />
+            </Route>
+            <Route path="/admin/audit" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+              <Route index element={<AdminAudit />} />
+            </Route>
+            <Route path="/admin/hikes" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+              <Route index element={<HikesAdmin />} />
+            </Route>
+            <Route path="/admin/hikes/:id" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+              <Route index element={<HikeEdit />} />
+            </Route>
+            <Route path="/admin/users" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+              <Route index element={<UsersAdmin />} />
+            </Route>
+            <Route path="/admin/guides" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+              <Route index element={<GuidesAdmin />} />
+            </Route>
+            <Route path="/admin/role-requests" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+              <Route index element={<RoleRequests />} />
+            </Route>
+            <Route path="/admin/deleted" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+              <Route index element={<DeletedAccounts />} />
             </Route>
             {/* redirect root to /explore */}
             <Route path="/" element={<Navigate to="/explore" replace />} />
 
-            {/* main pages */}
-            <Route path="/explore" element={<Explore />} />
-            <Route path="/mytrails" element={<MyTrails />} />
-            <Route path="/profile" element={<Navigate to="/profile/hiker" replace />} />
-            <Route path="/profile/hiker" element={<HikerProfile />} />
-            <Route path="/profile/guide" element={<GuideProfile />} />
-            <Route path="/hikes/:id" element={<HikeDetails />} />
-            <Route path="/hikes/create" element={<CreateHike />} />
+            {/* main pages - protected from admin access */}
+            <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
+            <Route path="/mytrails" element={<ProtectedRoute><MyTrails /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Navigate to="/profile/hiker" replace /></ProtectedRoute>} />
+            <Route path="/profile/hiker" element={<ProtectedRoute><HikerProfile /></ProtectedRoute>} />
+            <Route path="/profile/guide" element={<ProtectedRoute><GuideProfile /></ProtectedRoute>} />
+            <Route path="/hikes/:id" element={<ProtectedRoute><HikeDetails /></ProtectedRoute>} />
+            <Route path="/hikes/create" element={<ProtectedRoute><CreateHike /></ProtectedRoute>} />
 
             {/* catch-all → back to explore */}
             <Route path="*" element={<Navigate to="/explore" replace />} />
@@ -154,8 +224,7 @@ function App() {
         )}
         <Toast toast={toast} />
       </div>
-    </BrowserRouter>
-  );
+    );
 }
 
 const root = createRoot(document.getElementById("root"));

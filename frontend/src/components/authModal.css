@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 11000;
 }
 .auth-modal {
   background: #fff;
@@ -41,6 +41,43 @@
 .auth-input { padding:12px; border-radius:10px; border:1px solid #f0f0f0; background:#fbfbfb; }
 .auth-input-error { border-color:#e53e3e; background:#fff5f5; }
 .auth-error { font-size:12px; color:#e53e3e; margin-top:-4px; margin-bottom:4px; }
+
+/* Password container with toggle */
+.auth-password-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-password-container .auth-input {
+  padding-right: 40px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.auth-password-toggle:hover {
+  color: #374151;
+}
+
+.auth-password-toggle:focus {
+  outline: none;
+  color: #2f855a;
+}
+
 .auth-submit { margin-top:10px; background:#2f855a; color:#fff; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:600; }
 .auth-submit:disabled { opacity:0.6; cursor:not-allowed; }
 
@@ -51,3 +88,16 @@
 .role-card .role-title { font-weight:700; margin-bottom:6px; }
 .role-card .role-sub { font-size:13px; color:#707070; }
 .role-card.selected { border-color:#2f855a; box-shadow: 0 6px 18px rgba(47,133,90,0.08); }
+
+/* Responsive: Prevent auto-zoom on mobile when focusing input fields */
+@media (max-width: 768px) {
+  .auth-input {
+    font-size: 16px;
+  }
+  .auth-tab{
+    color: #3a3a3a;
+  }
+  .role-card{
+    color:#3a3a3a;
+  }
+}

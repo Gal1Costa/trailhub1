@@ -1,0 +1,150 @@
+name: Playwright E2E Tests
+
+on:
+  push:
+    branches: [ Development ]
+  pull_request:
+    branches: [ Development ]
+
+concurrency:
+  group: playwright-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: read
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18.x]
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create backend .env for CI
+        shell: bash
+        run: |
+          cat > .env << EOF
+          NODE_ENV=production
+          PORT=3000
+          DATABASE_URL=${{ secrets.CI_DATABASE_URL }}
+          ADMIN_UIDS=${{ secrets.CI_ADMIN_UIDS }}
+          EOF
+
+      - name: Bring up services (Postgres + Backend)
+        shell: bash
+        run: |
+          docker compose version || echo "Docker Compose plugin ready"
+          docker compose -f docker-compose.yml up -d db backend
+
+      - name: Wait for backend health
+        shell: bash
+        run: |
+          echo "Waiting for backend health at http://localhost:3000/healthz"
+          for i in {1..60}; do
+            if curl -fsS http://localhost:3000/healthz >/dev/null 2>&1; then
+              echo "Backend is healthy"; exit 0;
+            fi
+            sleep 2;
+          done
+          echo "Backend did not become healthy in time"; exit 1
+
+      - name: API validation (if script present)
+        shell: bash
+        env:
+          BASE_URL: http://localhost:3000
+        run: |
+          if [ -x ./test_api.sh ]; then
+            echo "Running test_api.sh against ${BASE_URL}"
+            ./test_api.sh
+          else
+            echo "test_api.sh not found, skipping"
+          fi
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+      
+      - name: Install dependencies (frontend)
+        working-directory: ./frontend
+        run: npm ci
+      
+      - name: Security audit (high severity)
+        working-directory: ./frontend
+        run: npm audit --audit-level=high
+
+      - name: Build verification
+        working-directory: ./frontend
+        shell: bash
+        run: |
+          export VITE_API_URL="http://localhost:3000"
+          npm run build
+
+      - name: Install Playwright browsers
+        working-directory: ./frontend
+        run: npx playwright install --with-deps
+      
+      - name: Start frontend (vite preview)
+        working-directory: ./frontend
+        run: |
+          nohup npm run preview -- --host --port 5173 > preview.log 2>&1 &
+          echo $! > preview.pid
+        env:
+          VITE_API_URL: http://localhost:3000
+      
+      - name: Wait for server to start
+        working-directory: ./frontend
+        run: |
+          npx wait-on http://localhost:5173 --timeout 60000 --interval 1000 --verbose
+          echo "Server is ready at http://localhost:5173"
+      
+      - name: Run Playwright tests
+        working-directory: ./frontend
+        run: npx playwright test
+        env:
+          CI: true
+      
+      - name: Dump docker logs on failure
+        if: failure()
+        run: |
+          echo "=== Docker Compose Services ==="
+          docker compose ps || true
+          echo "=== Backend Logs ==="
+          docker compose logs backend || true
+          echo "=== Database Logs ==="
+          docker compose logs db || true
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.node-version }}
+          path: frontend/playwright-report/
+          retention-days: 30
+      
+      - name: Upload test results (JSON)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.node-version }}
+          path: frontend/test-results/
+          retention-days: 30
+      
+      - name: Publish test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: |
+            frontend/test-results/results.xml
+          check_name: Playwright Test Results
+          comment_mode: always

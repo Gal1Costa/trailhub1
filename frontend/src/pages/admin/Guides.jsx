@@ -128,46 +128,37 @@ export default function Guides() {
   const columns = [
     { key: 'displayName', title: 'Display Name', render: (r) => r.displayName || r.user?.name || '—' },
     { key: 'email', title: 'Email', render: (r) => r.user?.email || '—' },
-    { key: 'verified', title: 'Verified', render: (r) => (
-      <span style={{ padding: '2px 6px', borderRadius: 3, background: r.isVerified ? '#4caf50' : '#ccc', color: '#fff', fontSize: '0.85em' }}>
-        {r.isVerified ? '✓ Verified' : 'Not Verified'}
-      </span>
-    )},
-    { key: 'featured', title: 'Featured', render: (r) => (
-      <span style={{ padding: '2px 6px', borderRadius: 3, background: r.isFeatured ? '#ff9800' : '#ccc', color: '#fff', fontSize: '0.85em' }}>
-        {r.isFeatured ? '⭐ Featured' : 'Regular'}
-      </span>
-    )},
+    { key: 'status', title: 'Status', render: (r) => {
+      const status = r.status || r.user?.status || 'ACTIVE';
+      const statusColor = status === 'DELETED' ? '#f44336' : status === 'ACTIVE' ? '#4caf50' : '#ff9800';
+      return <span style={{ padding: '2px 6px', borderRadius: 3, background: statusColor, color: '#fff', fontSize: '0.85em' }}>{status}</span>;
+    }},
+    { key: 'createdAt', title: 'Joined', render: (r) => (r.createdAt ? new Date(r.createdAt).toLocaleDateString() : r.user?.createdAt ? new Date(r.user.createdAt).toLocaleDateString() : '—') },
     { key: 'stats', title: 'Stats', render: (r) => `${r._count?.hikes || 0} hikes, ${r._count?.reviews || 0} reviews` },
-    { key: 'actions', title: 'Actions', render: (r) => (
-      <div className="admin-actions" style={{ display: 'flex', gap: 6 }}>
-        <button 
-          className="btn btn-sm" 
-          onClick={() => handleToggleVerified(r)} 
-          disabled={verifyLoading === r.id}
-        >
-          {verifyLoading === r.id ? '...' : (r.isVerified ? 'Unverify' : 'Verify')}
-        </button>
-        <button 
-          className="btn btn-sm" 
-          onClick={() => handleToggleFeatured(r)} 
-          disabled={featureLoading === r.id}
-        >
-          {featureLoading === r.id ? '...' : (r.isFeatured ? 'Unfeature' : 'Feature')}
-        </button>
-        <button className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(r)}>
-          Delete
-        </button>
-      </div>
-    )},
+    { key: 'actions', title: 'Actions', render: (r) => {
+      const isDeleted = r.status === 'DELETED' || r.user?.status === 'DELETED';
+      return (
+        <div className="admin-actions" style={{ display: 'flex', gap: 6 }}>
+          <button 
+            className="btn btn-outline-danger btn-sm" 
+            onClick={() => handleDelete(r)}
+            disabled={isDeleted}
+            style={{ opacity: isDeleted ? 0.5 : 1, cursor: isDeleted ? 'not-allowed' : 'pointer' }}
+          >
+            {isDeleted ? 'Deleted' : 'Delete'}
+          </button>
+        </div>
+      );
+    }},
   ];
 
   return (
     <div className="admin-guides">
       <h2>Guides Management</h2>
       
-      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:12 }}>
+      <div className="admin-filter-bar">
         <input 
+          className="admin-search-bar"
           placeholder="Search guides" 
           value={query} 
           onChange={async (e) => { 
@@ -178,16 +169,15 @@ export default function Guides() {
             setGuides(Array.isArray(res.items) ? res.items : []); 
             setTotal(res.total || 0); 
           }} 
-          style={{ padding:8, width:320 }} 
         />
-        <div>Showing {total} results</div>
+        <div className="admin-results-count">Showing {total} results</div>
       </div>
 
       <DataTable columns={columns} data={guides} />
 
-      <div style={{ marginTop:12, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-        <div>Page {page} / {pages}</div>
-        <div style={{ display:'flex', gap:8 }}>
+      <div className="pagination">
+        <div className="pagination-info">Page {page} of {pages}</div>
+        <div className="pagination-controls">
           <button 
             onClick={async () => { 
               const p = Math.max(1, page-1); 
@@ -198,7 +188,7 @@ export default function Guides() {
             }} 
             disabled={page===1}
           >
-            Prev
+            Previous
           </button>
           <button 
             onClick={async () => { 

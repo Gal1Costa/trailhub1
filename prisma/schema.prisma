@@ -12,87 +12,69 @@ model User {
   email        String        @unique
   name         String?
   role         String
-  // Admin soft delete fields
-  status       UserStatus    @default(ACTIVE)
-  isDeleted    Boolean       @default(false)
-  deletedAt    DateTime?
-  anonymizedAt DateTime?
   createdAt    DateTime      @default(now())
   firebaseUid  String?       @unique
+  anonymizedAt DateTime?
+  deletedAt    DateTime?
+  isDeleted    Boolean       @default(false)
+  status       UserStatus    @default(ACTIVE)
   bookings     Booking[]
   guide        Guide?
   hikerProfile HikerProfile?
   reviews      Review[]
 }
 
-
 model Guide {
-  id              String    @id @default(uuid())
-  // legacy status — DO NOT remove or rename
-  status          String    @default("ACTIVE")
-  userId          String    @unique
-  bio             String?
-  createdAt       DateTime  @default(now())
-  photoUrl        String?
-  displayName     String?
-  languages       String[]
-  yearsExperience Int?
-  isVerified      Boolean   @default(false)
-  verifiedAt      DateTime?
-  verifiedBy      String?
-  profileSlug     String?
-  isFeatured      Boolean   @default(false)
-  updatedAt       DateTime  @updatedAt
-  location        String?
-  user            User      @relation(fields: [userId], references: [id])
-  hikes           Hike[]
-  reviews         Review[]
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  bio         String?
+  createdAt   DateTime @default(now())
+  displayName String?
+  updatedAt   DateTime @updatedAt
+  location    String?
+  status      String   @default("ACTIVE")
+  user        User     @relation(fields: [userId], references: [id])
+  hikes       Hike[]
+  reviews     Review[]
 }
 
 model HikerProfile {
-  id                  String   @id @default(uuid())
-  userId              String   @unique
-  bio                 String?
-  displayName         String?
-  interests           String[]
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  location            String?
-  emergencyContact    String?
-  fitnessLevel        String?
-  medicalInfo         String?
-  photoUrl            String?
-  preferredDifficulty String[]
-  user                User     @relation(fields: [userId], references: [id])
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  bio         String?
+  displayName String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  location    String?
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 model Hike {
   id            String          @id @default(uuid())
-  // legacy status — DO NOT remove or rename
-  status        String          @default("ACTIVE")
   title         String
   description   String?
-  difficulty    DifficultyLevel
+  price         Int?
+  createdAt     DateTime        @default(now())
+  guideId       String
+  capacity      Int?
+  date          DateTime?
+  location      String?
+  coverUrl      String?
   distance      String?
   duration      String?
+  meetingTime   String?
+  updatedAt     DateTime        @updatedAt
+  difficulty    DifficultyLevel
+  elevationGain String?
+  meetingPlace  String?
+  routePath     String?
+  whatToBring   String?
+  status        String          @default("ACTIVE")
   durationDays  Int?
   isMultiDay    Boolean         @default(false)
-  price         Int?
-  capacity      Int?
-  location      String?
-  date          DateTime?
-  meetingTime   String?
-  meetingPlace  String?
-  elevationGain String?
-  whatToBring   String?
-  routePath     String?
-  coverUrl      String?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  guideId       String
   bookings      Booking[]
-  reviews       Review[]
   guide         Guide           @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  reviews       Review[]
 }
 
 model Booking {
@@ -109,25 +91,25 @@ model Review {
   id        String   @id @default(uuid())
   userId    String
   guideId   String
-  hikeId    String?
-  tags      String[]
   rating    Int
   comment   String?
   createdAt DateTime @default(now())
+  hikeId    String?
+  tags      String[]
   guide     Guide    @relation(fields: [guideId], references: [id])
+  hike      Hike?    @relation(fields: [hikeId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
-  hike      Hike?     @relation(fields: [hikeId], references: [id], onDelete: SetNull)
 }
 
 model AuditLog {
-  id        String   @id @default(uuid())
-  actorId   String?  // user id who performed the action (nullable for system)
+  id         String   @id @default(uuid())
+  actorId    String?
   actorEmail String?
-  action    String
-  resource  String?
+  action     String
+  resource   String?
   resourceId String?
-  details   String?
-  createdAt DateTime @default(now())
+  details    String?
+  createdAt  DateTime @default(now())
 }
 
 enum DifficultyLevel {
@@ -135,9 +117,9 @@ enum DifficultyLevel {
   MODERATE
   HARD
 }
+
 enum UserStatus {
   ACTIVE
   SUSPENDED
   DELETED
 }
-

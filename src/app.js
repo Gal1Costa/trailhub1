@@ -23,7 +23,17 @@ dotenv.config();
 const app = express();
 
 // Core middleware
-app.use(cors());
+//temporary changes
+// app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173',       // desktop dev
+    'http://192.168.0.103:5173'    // mobile devices on same LAN
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true  // important if sending cookies or auth headers
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('tiny'));

@@ -130,8 +130,9 @@ export default function CreateHike() {
       // Update if: (empty OR was auto-calculated) AND not manually edited AND we have a new value
       if ((isDistanceEmpty || wasDistanceAutoCalculated) && numericDistance !== null && !manuallyEditedRef.current.distance) {
         const newDistance = parseFloat(numericDistance.toFixed(1));
-        // Only update if value would change
-        if (currentDistance !== newDistance) {
+        // Only update if value would change (use strict comparison to avoid floating point issues)
+        const currentDistanceNum = typeof currentDistance === 'number' ? currentDistance : parseFloat(currentDistance);
+        if (isNaN(currentDistanceNum) || Math.abs(currentDistanceNum - newDistance) > 0.01) {
           updates.distance = newDistance;
           updates._distanceAutoCalculated = true;
         }
@@ -146,8 +147,9 @@ export default function CreateHike() {
         // Update if: (empty OR was auto-calculated) AND not manually edited AND we have a new value
         if ((isDurationHoursEmpty || wasDurationHoursAutoCalculated) && numericDuration !== null && !manuallyEditedRef.current.duration) {
           const newDurationHours = parseFloat(numericDuration.toFixed(1));
-          // Only update if value would change
-          if (currentDurationHours !== newDurationHours) {
+          // Only update if value would change (use strict comparison to avoid floating point issues)
+          const currentDurationNum = typeof currentDurationHours === 'number' ? currentDurationHours : parseFloat(currentDurationHours);
+          if (isNaN(currentDurationNum) || Math.abs(currentDurationNum - newDurationHours) > 0.01) {
             updates.durationHours = newDurationHours;
             updates.duration = newDurationHours; // Keep backward compatibility
             updates._durationHoursAutoCalculated = true;
