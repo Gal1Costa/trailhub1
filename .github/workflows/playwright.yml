@@ -141,6 +141,13 @@ jobs:
             ~/.cache/ms-playwright
           key: playwright-browsers-${{ steps.playwright-version.outputs.version }}
 
+      - name: Install Playwright system dependencies
+        working-directory: ./frontend
+        run: |
+          # Install system dependencies required by Playwright browsers
+          # This ensures WebKit has all required libraries (like libwoff2dec)
+          npx playwright install-deps
+
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         working-directory: ./frontend
