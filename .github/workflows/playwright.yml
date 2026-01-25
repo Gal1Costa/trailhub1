@@ -329,11 +329,40 @@ jobs:
             echo "🏗️ Building and starting containers..."
             docker compose up -d --build
             
-            echo "⏳ Waiting for services to be ready..."
-            sleep 10
+            echo "⏳ Waiting for database to be ready..."
+            # Wait for database to accept connections
+            for i in {1..30}; do
+              if docker compose exec -T db pg_isready -U trailhub >/dev/null 2>&1; then
+                echo "✅ Database is ready"
+                break
+              fi
+              echo "Waiting for database... (attempt $i/30)"
+              sleep 2
+            done
+            
+            echo "⏳ Waiting for backend container to be ready..."
+            # Wait for backend container to be running
+            for i in {1..30}; do
+              if docker compose ps backend | grep -q "Up"; then
+                echo "✅ Backend container is running"
+                break
+              fi
+              echo "Waiting for backend container... (attempt $i/30)"
+              sleep 2
+            done
+            
+            # Give backend a moment to fully initialize
+            sleep 5
             
             echo "🔄 Running database migrations..."
-            docker compose exec -T backend npx prisma migrate deploy || echo "⚠️ Migrations failed or no migrations to run"
+            # Run migrations inside the backend container where DATABASE_URL resolves correctly
+            if docker compose exec -T backend sh -c "npx prisma migrate deploy"; then
+              echo "✅ Migrations completed successfully"
+            else
+              echo "⚠️ Migration command failed, checking status..."
+              docker compose exec -T backend sh -c "npx prisma migrate status" || true
+              echo "⚠️ Continuing deployment despite migration warning..."
+            fi
             
             echo "📊 Checking container status..."
             docker compose ps
