@@ -1,0 +1,343 @@
+
+[0;34m=== Running All Scenarios ===[0m
+
+
+[0;34m=== Health Check ===[0m
+
+[1;33mℹ Testing backend connectivity...[0m
+[0;32m✓ Backend is running[0m
+{"status":"ok"}
+
+[0;34m=== Scenario 1: Register User → Create Test Hike → Join Hike ===[0m
+
+[1;33mℹ Step 1: Registering new hiker...[0m
+[0;32m✓ Registered hiker with ID: 6186102b-365d-42f7-b5c2-bd771b15cb54[0m
+{
+  "id":"6186102b-365d-42f7-b5c2-bd771b15cb54",
+  "email":"hiker_1769353354@example.com",
+  "name":"Jane Hiker",
+  "role":"hiker"
+}
+[1;33mℹ Step 2: Creating test guide and hike...[0m
+[0;32m✓ Created test hike with ID: 64fe2b84-92c1-406b-be42-5ee9d317b0b4[0m
+{
+  "id":"64fe2b84-92c1-406b-be42-5ee9d317b0b4",
+  "title":"Scenario 1 Test Hike 1769353354",
+  "description":"Test hike for joining",
+  "price":30,
+  "createdAt":"2026-01-25T15:02:35.736Z",
+  "guideId":"9a57e8ec-3d9b-491c-a56c-f7697e413c60",
+  "capacity":20,
+  "date":"2026-02-15T00:00:00.000Z",
+  "location":"Unknown location",
+  "coverUrl":null,
+  "distance":null,
+  "duration":null,
+  "meetingTime":null,
+  "updatedAt":"2026-01-25T15:02:35.736Z",
+[1;33mℹ Step 3: Joining hike #64fe2b84-92c1-406b-be42-5ee9d317b0b4 as hiker...[0m
+[0;32m✓ Joined hike with booking ID: 70d27d32-b19c-40e6-95b0-3121f02e242f[0m
+{
+  "id":"70d27d32-b19c-40e6-95b0-3121f02e242f",
+  "userId":"6186102b-365d-42f7-b5c2-bd771b15cb54",
+  "hikeId":"64fe2b84-92c1-406b-be42-5ee9d317b0b4",
+  "status":"pending",
+  "createdAt":"2026-01-25T15:02:36.327Z"
+}
+[1;33mℹ Step 4: Checking user profile (should show booking)...[0m
+true
+[0;32m✓ User profile loaded with bookings field[0m
+{
+  "id":"6186102b-365d-42f7-b5c2-bd771b15cb54",
+  "email":"hiker_1769353354@example.com",
+  "name":"Jane Hiker",
+  "role":"hiker",
+  "createdAt":"2026-01-25T15:02:34.478Z",
+  "firebaseUid":"hiker-1769353354",
+  "anonymizedAt":null,
+  "deletedAt":null,
+  "isDeleted":false,
+  "status":"ACTIVE",
+  "bookings":[{"id":"70d27d32-b19c-40e6-95b0-3121f02e242f",
+  "userId":"6186102b-365d-42f7-b5c2-bd771b15cb54",
+  "hikeId":"64fe2b84-92c1-406b-be42-5ee9d317b0b4",
+  "status":"pending",
+
+[0;34m=== Scenario 2: Create Hike → Update → Delete (Guide Only) ===[0m
+
+[1;33mℹ Step 0: Registering guide user...[0m
+[0;32m✓ Registered guide user with ID: d48abfac-4fe4-4ff4-a558-42959fde40cf[0m
+[1;33mℹ Step 0b: Creating guide profile...[0m
+[0;32m✓ Created/updated guide profile[0m
+{
+  "id":"b2d34cf7-d922-44ab-bc6d-5c1a6d8c01b0",
+  "userId":"d48abfac-4fe4-4ff4-a558-42959fde40cf",
+  "bio":"Test guide for API testing",
+  "createdAt":"2026-01-25T15:02:36.986Z",
+  "displayName":"Test Guide",
+  "updatedAt":"2026-01-25T15:02:37.311Z",
+  "location":null,
+  "status":"ACTIVE"
+}
+[1;33mℹ Step 1: Creating new hike...[0m
+[0;32m✓ Created hike with ID: 47d642a2-98e5-4736-b9b7-a955cd859d87[0m
+{
+  "id":"47d642a2-98e5-4736-b9b7-a955cd859d87",
+  "title":"Test Hike 1769353354",
+  "description":"A beautiful test hike",
+  "price":55,
+  "createdAt":"2026-01-25T15:02:37.665Z",
+  "guideId":"b2d34cf7-d922-44ab-bc6d-5c1a6d8c01b0",
+  "capacity":15,
+  "date":"2024-12-25T00:00:00.000Z",
+  "location":"Unknown location",
+  "coverUrl":null,
+  "distance":null,
+  "duration":null,
+  "meetingTime":null,
+  "updatedAt":"2026-01-25T15:02:37.665Z",
+[1;33mℹ Step 2: Updating hike price...[0m
+[0;32m✓ Updated hike price to: 65[0m
+{
+  "id":"47d642a2-98e5-4736-b9b7-a955cd859d87",
+  "title":"Test Hike 1769353354",
+  "description":"A beautiful test hike",
+  "price":65,
+  "createdAt":"2026-01-25T15:02:37.665Z",
+  "guideId":"b2d34cf7-d922-44ab-bc6d-5c1a6d8c01b0",
+  "capacity":20,
+  "date":"2024-12-25T00:00:00.000Z",
+  "location":"Unknown location",
+  "coverUrl":null,
+  "distance":null,
+  "duration":null,
+  "meetingTime":null,
+  "updatedAt":"2026-01-25T15:02:38.021Z",
+[1;33mℹ Step 3: Deleting hike...[0m
+[0;32m✓ Deleted hike (HTTP 204 No Content)[0m
+[1;33mℹ Step 4: Verifying hike is deleted...[0m
+[1;33mℹ Hike still exists or returns HTTP 200[0m
+
+[0;34m=== Scenario 3: Test Privacy Filtering on User Profiles ===[0m
+
+[1;33mℹ Registering test user for privacy checks...[0m
+[0;32m✓ Test user registered: 35d0ea17-260f-4657-8693-a747d1ee2acc[0m
+[1;33mℹ Testing /api/users/35d0ea17-260f-4657-8693-a747d1ee2acc with different access levels...
+[0m
+[1;33mℹ View 1: As another hiker (privacy-filtered)...[0m
+[0;32m✓ Email is hidden in public view[0m
+{
+  "id":"35d0ea17-260f-4657-8693-a747d1ee2acc",
+  "name":"Privacy Test User",
+  "role":"hiker",
+  "createdAt":"2026-01-25T15:02:38.914Z",
+  "anonymizedAt":null,
+  "deletedAt":null,
+  "isDeleted":false,
+  "status":"ACTIVE",
+  "hikerProfile":{"id":"a8b875f9-d221-4647-a9d6-ff418ce18e26",
+  "userId":"35d0ea17-260f-4657-8693-a747d1ee2acc",
+  "bio":null,
+  "displayName":"Privacy Test User",
+  "createdAt":"2026-01-25T15:02:38.927Z",
+  "updatedAt":"2026-01-25T15:02:38.927Z",
+[1;33mℹ 
+View 2: As the owner (full profile)...[0m
+{
+  "id":"35d0ea17-260f-4657-8693-a747d1ee2acc",
+  "name":"Privacy Test User",
+  "role":"hiker",
+  "createdAt":"2026-01-25T15:02:38.914Z",
+  "anonymizedAt":null,
+  "deletedAt":null,
+  "isDeleted":false,
+  "status":"ACTIVE",
+  "hikerProfile":{"id":"a8b875f9-d221-4647-a9d6-ff418ce18e26",
+  "userId":"35d0ea17-260f-4657-8693-a747d1ee2acc",
+  "bio":null,
+  "displayName":"Privacy Test User",
+  "createdAt":"2026-01-25T15:02:38.927Z",
+  "updatedAt":"2026-01-25T15:02:38.927Z",
+[1;33mℹ 
+View 3: As admin (full profile)...[0m
+{
+  "id":"35d0ea17-260f-4657-8693-a747d1ee2acc",
+  "name":"Privacy Test User",
+  "role":"hiker",
+  "createdAt":"2026-01-25T15:02:38.914Z",
+  "anonymizedAt":null,
+  "deletedAt":null,
+  "isDeleted":false,
+  "status":"ACTIVE",
+  "hikerProfile":{"id":"a8b875f9-d221-4647-a9d6-ff418ce18e26",
+  "userId":"35d0ea17-260f-4657-8693-a747d1ee2acc",
+  "bio":null,
+  "displayName":"Privacy Test User",
+  "createdAt":"2026-01-25T15:02:38.927Z",
+  "updatedAt":"2026-01-25T15:02:38.927Z",
+
+[0;34m=== Scenario 4: Error Handling (Invalid Data & Wrong Roles) ===[0m
+
+[1;33mℹ Step 1: Trying to create hike as hiker (should fail)...[0m
+[0;32m✓ Correctly rejected hike creation by hiker[0m
+{
+  "error":"You must have a guide profile to create hikes"
+}
+[1;33mℹ 
+Step 2: Registering user with invalid email...[0m
+[1;33mℹ API accepted invalid email (validation may be lenient)[0m
+{
+  "id":"f047135e-f33e-4bd4-b831-8327ac0590a5",
+  "email":"not-an-email",
+  "name":"Test",
+  "role":"hiker"
+}
+[1;33mℹ 
+Step 3: Creating guide for invalid data test...[0m
+[1;33mℹ Step 4: Trying to create hike with invalid difficulty...[0m
+[0;32m✓ Correctly rejected invalid difficulty[0m
+{
+  "error":"\nInvalid `prisma.hike.create()` invocation in\nC:\\Users\\tauntaun\\Desktop\\trailhub1\\src\\modules\\hikes\\repository\\index.js:243:31\n\n  240 \n  241 // Create / update / delete keep raw Prisma data; frontend will still see mapped fields via list/get\n  242 async function createHike(data) {\n→ 243   const h = await prisma.hike.create({\n          data: {\n            title: \"Invalid Difficulty Test\",
+  \n            description: null,
+  \n            difficulty: \"SUPER_HARD\",
+  \n                        ~~~~~~~~~~~~\n            distance: null,
+  \n            duration: null,
+  \n            elevationGain: null,
+  \n            price: null,
+  \n            capacity: 10,
+  \n            date: new Date(\"2026-02-15T00:00:00.000Z\"),
+  \n            meetingTime: null,
+  \n            meetingPlace: null,
+  \n            whatToBring: null,
+  \n            location: null,
+  \n            isMultiDay: false,
+
+[0;34m=== Scenario 5: Edge Cases (Full Hikes & Dependencies) ===[0m
+
+[1;33mℹ Step 1: Setting up guide and hike with capacity 1...[0m
+[0;32m✓ Created hike with capacity 1: c93e352f-10db-4efb-afe9-746d084c1dbb[0m
+[1;33mℹ Step 2: First hiker joins...[0m
+[0;32m✓ First hiker joined successfully[0m
+[1;33mℹ Step 3: Second hiker tries to join full hike...[0m
+[0;32m✓ Correctly rejected booking for full hike[0m
+{
+  "error":"This hike is full"
+}
+[1;33mℹ Step 4: Trying to delete hike with active booking...[0m
+[0;32m✓ Hike deleted (cascade delete handled bookings)[0m
+
+[0;34m=== Scenario 6: Admin Operations ===[0m
+
+[1;33mℹ Step 1: Testing admin endpoints...[0m
+[1;33mℹ Checking admin overview...[0m
+[0;32m✓ Admin overview endpoint accessible[0m
+{
+  "users":106,
+  "hikes":31,
+  "guides":40,
+  "bookings":20,
+  "averageRating":4.4
+}
+[1;33mℹ 
+Step 2: Fetching admin users list...[0m
+[0;32m✓ Admin users list accessible[0m
+{
+  "items":[{"id":"f7197bf5-624f-4135-8b42-3a555df39b21",
+  "email":"hiker2-edge-1769353354@example.com",
+  "name":"Hiker 2",
+  "role":"hiker",
+  "status":"ACTIVE",
+  "createdAt":"2026-01-25T15:02:42.140Z",
+  "guide":null,
+  "hikerProfile":{"id":"00e0a146-a0fa-4501-9a88-01c00ea465a7",
+  "location":null
+}},
+  {"id":"28618477-5ba5-4da7-8d1c-679d91b94c7c",
+  "email":"hiker1-edge-1769353354@example.com",
+  "name":"Hiker 1",
+  "role":"hiker",
+[1;33mℹ 
+Step 3: Testing non-admin access (should fail)...[0m
+[0;32m✓ Non-admin correctly denied access[0m
+{
+  "error":"Forbidden"
+}
+
+[0;34m=== Scenario 7: Reviews Functionality ===[0m
+
+[1;33mℹ Step 1: Setting up guide and hike...[0m
+[1;33mℹ Step 2: Creating review for guide...[0m
+[0;32m✓ Review created: 3ff0efc8-12bc-4b85-a748-9a9e8caa1ec5[0m
+{
+  "id":"3ff0efc8-12bc-4b85-a748-9a9e8caa1ec5",
+  "userId":"88629857-b4b1-4cc7-ab61-fa5c92110c1d",
+  "guideId":"3839a315-2da4-4c49-8c3c-92e08ae539d9",
+  "rating":5,
+  "comment":"Excellent guide! Very knowledgeable and friendly.",
+  "createdAt":"2026-01-25T15:02:45.223Z",
+  "hikeId":"a22482f9-13df-4683-bf33-645e0335ceb6",
+  "tags":[]
+}
+[1;33mℹ 
+Step 3: Fetching reviews for guide...[0m
+[0;32m✓ Reviews retrieved successfully[0m
+[{
+  "id":"3ff0efc8-12bc-4b85-a748-9a9e8caa1ec5",
+  "userId":"88629857-b4b1-4cc7-ab61-fa5c92110c1d",
+  "guideId":"3839a315-2da4-4c49-8c3c-92e08ae539d9",
+  "rating":5,
+  "comment":"Excellent guide! Very knowledgeable and friendly.",
+  "createdAt":"2026-01-25T15:02:45.223Z",
+  "hikeId":"a22482f9-13df-4683-bf33-645e0335ceb6",
+  "tags":[],
+  "user":{"id":"88629857-b4b1-4cc7-ab61-fa5c92110c1d",
+  "name":"Review Hiker",
+  "email":"hiker-review-1769353354@example.com"
+}}]
+
+[0;34m=== Scenario 8: Search & Filtering ===[0m
+
+[1;33mℹ Step 1: Testing hike search by difficulty...[0m
+[0;32m✓ Found 1330 easy hikes[0m
+[{
+  "id":"a22482f9-13df-4683-bf33-645e0335ceb6",
+  "title":"Review Test Hike 1769353354",
+  "description":null,
+  "price":null,
+  "createdAt":"2026-01-25T15:02:44.451Z",
+  "guideId":"3839a315-2da4-4c49-8c3c-92e08ae539d9",
+  "capacity":10,
+  "date":"2026-01-24T00:00:00.000Z",
+  "location":"Unknown location",
+  "coverUrl":null,
+  "distance":null,
+  "duration":null,
+  "meetingTime":null,
+  "updatedAt":"2026-01-25T15:02:44.451Z",
+[1;33mℹ 
+Step 2: Testing hike search by status...[0m
+[0;32m✓ Found 1489 active hikes[0m
+[1;33mℹ 
+Step 3: Testing pagination...[0m
+[0;32m✓ Pagination working - page 1 has 1489 items[0m
+[{
+  "id":"a22482f9-13df-4683-bf33-645e0335ceb6",
+  "title":"Review Test Hike 1769353354",
+  "description":null,
+  "price":null,
+  "createdAt":"2026-01-25T15:02:44.451Z",
+  "guideId":"3839a315-2da4-4c49-8c3c-92e08ae539d9",
+  "capacity":10,
+  "date":"2026-01-24T00:00:00.000Z",
+  "location":"Unknown location",
+  "coverUrl":null,
+  "distance":null,
+  "duration":null,
+  "meetingTime":null,
+  "updatedAt":"2026-01-25T15:02:44.451Z",
+[1;33mℹ 
+Step 4: Testing search functionality...[0m
+[0;32m✓ Search returned 900 results[0m
+
+[0;34m=== All Scenarios Complete ===[0m
+
