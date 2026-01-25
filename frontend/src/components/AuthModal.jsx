@@ -246,10 +246,15 @@ export default function AuthModal({ open, onClose, initialTab = 'login' }) {
         // If admin detected, sign out immediately and show generic error
         // This prevents any route guards from redirecting
         if (isAdmin) {
+          // Set a flag so ProtectedRoute knows not to redirect
+          localStorage.setItem('blockAdminExploreLogin', '1');
           await auth.signOut();
-          // Clear form error and show generic error message like a normal failed login
-          setFormError('');
-          setPasswordError('Invalid email or password');
+          setTimeout(() => {
+            localStorage.removeItem('blockAdminExploreLogin');
+          }, 2000); // Remove after a short delay
+          // Show required error message for admin login attempt on Explore
+          setFormError('Admin credentials for admin dashboard only');
+          setPasswordError('');
           setLoading(false);
           return;
         }
