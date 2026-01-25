@@ -128,7 +128,7 @@ router.get('/users', requireRole(['admin']), async (req, res, next) => {
           role: true, 
           status: true,
           createdAt: true,
-          guide: { select: { id: true, displayName: true, isVerified: true, isFeatured: true } },
+          guide: { select: { id: true, displayName: true, status: true } },
           hikerProfile: { select: { id: true, location: true } }
         },
       }),
@@ -193,7 +193,7 @@ router.patch('/guides/:id', requireRole(['admin']), async (req, res, next) => {
     const { id } = req.params;
     const body = req.body || {};
 
-    const allowed = ['displayName', 'bio', 'isVerified', 'isFeatured', 'status'];
+    const allowed = ['displayName', 'bio', 'status'];
     const data = {};
     for (const k of allowed) {
       if (Object.prototype.hasOwnProperty.call(body, k)) {
