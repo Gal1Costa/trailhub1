@@ -63,25 +63,7 @@ function validatePositiveNumber(value, fieldName, isRequired = false) {
   return null;
 }
 
-/**
- * Validates file size (in bytes) and type
- */
-function validateImageFile(file, maxSizeMB = 5) {
-  if (!file) return null; // Cover image is optional
-  
-  const maxSize = maxSizeMB * 1024 * 1024; // Convert to bytes
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-  
-  if (!allowedTypes.includes(file.type)) {
-    return `Image must be one of: JPG, PNG, WebP, or GIF`;
-  }
-  
-  if (file.size > maxSize) {
-    return `Image size must be less than ${maxSizeMB}MB`;
-  }
-  
-  return null;
-}
+
 
 /**
  * Validates the complete hike form data
@@ -275,10 +257,7 @@ export function validateHikeForm(formData) {
 
   // Cover Image Validation
   const coverErrors = {};
-  const coverError = validateImageFile(cover.coverFile);
-  if (coverError) {
-    coverErrors.coverFile = coverError;
-  }
+  // Image validation (size and type) is handled in the CoverImage component
   
   if (Object.keys(coverErrors).length > 0) {
     errors.cover = coverErrors;
@@ -485,9 +464,7 @@ export function validateField(section, fieldName, value, allFormData = {}) {
       return routeErrors[fieldName] || null;
     
     case 'cover':
-      if (fieldName === 'coverFile') {
-        return validateImageFile(value);
-      }
+      // Image validation (size and type) is handled in the CoverImage component
       return null;
     
     default:

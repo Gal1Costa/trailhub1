@@ -34,8 +34,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true  // important if sending cookies or auth headers
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(morgan('tiny'));
 app.use(requestLogger);
 
