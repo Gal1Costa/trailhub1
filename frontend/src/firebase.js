@@ -10,15 +10,14 @@ import {
   EmailAuthProvider,
 } from "firebase/auth";
 
-// Web app's Firebase configuration (from Firebase Console)
+// Web app's Firebase configuration (from environment variables)
 const firebaseConfig = {
-  apiKey: "AIzaSyAeHOfUDSuWxWLgLy8KNzXiN0y-NR98dbU",
-  authDomain: "trailhub-82d1c.firebaseapp.com",
-  projectId: "trailhub-82d1c",
-  storageBucket: "trailhub-82d1c.firebasestorage.app",
-  messagingSenderId: "283528215556",
-  appId: "1:283528215556:web:73c3558e91fdad5ce34951",
-  measurementId: "G-HNS6CEZNK9",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase

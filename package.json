@@ -20,5 +20,8 @@
   },
   "devDependencies": {
     "prisma": "^6.2.1"
+  },
+  "overrides": {
+    "fast-xml-parser": "^5.3.4"
   }
 }

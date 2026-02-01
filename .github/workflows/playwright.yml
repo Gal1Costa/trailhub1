@@ -41,6 +41,36 @@ jobs:
             echo "Please add CI_ADMIN_UIDS secret in GitHub Settings → Secrets and variables → Actions"
             exit 1
           fi
+          if [ -z "${{ secrets.CI_FIREBASE_API_KEY }}" ]; then
+            echo "❌ Error: CI_FIREBASE_API_KEY secret is not set"
+            echo "Please add CI_FIREBASE_API_KEY secret in GitHub Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          if [ -z "${{ secrets.CI_FIREBASE_AUTH_DOMAIN }}" ]; then
+            echo "❌ Error: CI_FIREBASE_AUTH_DOMAIN secret is not set"
+            echo "Please add CI_FIREBASE_AUTH_DOMAIN secret in GitHub Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          if [ -z "${{ secrets.CI_FIREBASE_PROJECT_ID }}" ]; then
+            echo "❌ Error: CI_FIREBASE_PROJECT_ID secret is not set"
+            echo "Please add CI_FIREBASE_PROJECT_ID secret in GitHub Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          if [ -z "${{ secrets.CI_FIREBASE_STORAGE_BUCKET }}" ]; then
+            echo "❌ Error: CI_FIREBASE_STORAGE_BUCKET secret is not set"
+            echo "Please add CI_FIREBASE_STORAGE_BUCKET secret in GitHub Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          if [ -z "${{ secrets.CI_FIREBASE_MESSAGING_SENDER_ID }}" ]; then
+            echo "❌ Error: CI_FIREBASE_MESSAGING_SENDER_ID secret is not set"
+            echo "Please add CI_FIREBASE_MESSAGING_SENDER_ID secret in GitHub Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          if [ -z "${{ secrets.CI_FIREBASE_APP_ID }}" ]; then
+            echo "❌ Error: CI_FIREBASE_APP_ID secret is not set"
+            echo "Please add CI_FIREBASE_APP_ID secret in GitHub Settings → Secrets and variables → Actions"
+            exit 1
+          fi
           echo "✅ All required secrets are set"
 
       - name: Setup Node.js ${{ matrix.node-version }}
@@ -123,6 +153,19 @@ jobs:
       - name: Install dependencies (frontend)
         working-directory: ./frontend
         run: npm ci
+
+      - name: Create frontend .env.local for CI
+        shell: bash
+        run: |
+          cat > frontend/.env.local << EOF
+          VITE_FIREBASE_API_KEY=${{ secrets.CI_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.CI_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID=${{ secrets.CI_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET=${{ secrets.CI_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.CI_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID=${{ secrets.CI_FIREBASE_APP_ID }}
+          VITE_API_URL=http://localhost:3000
+          EOF
       
       - name: Security audit (high severity)
         working-directory: ./frontend
@@ -157,7 +200,6 @@ jobs:
         working-directory: ./frontend
         shell: bash
         run: |
-          export VITE_API_URL="http://localhost:3000"
           npm run build
       
       - name: Start frontend (vite preview)
@@ -165,8 +207,6 @@ jobs:
         run: |
           nohup npm run preview -- --host --port 5173 > preview.log 2>&1 &
           echo $! > preview.pid
-        env:
-          VITE_API_URL: http://localhost:3000
       
       - name: Wait for server to start
         working-directory: ./frontend
