@@ -4,65 +4,6 @@ import { auth, onAuthStateChanged } from '../../firebase';
 import api from '../../api';
 import LoadingSkeleton from './components/LoadingSkeleton';
 
-/**
- * ═══════════════════════════════════════════════════════════════════════════
- * ADMIN ROUTE GUARD - STRICT SECURITY ENFORCEMENT
- * ═══════════════════════════════════════════════════════════════════════════
- * 
- * PURPOSE:
- * This guard protects ALL admin routes (except /admin/access) and ensures
- * ONLY authenticated users with role === 'admin' can access them.
- * 
- * SECURITY RULES (NON-NEGOTIABLE):
- * 1. Backend API (/me) is the SINGLE SOURCE OF TRUTH for admin status
- * 2. No admin UI is EVER rendered without backend verification
- * 3. ALL non-admin access attempts MUST redirect to /admin/access
- * 4. This guard NEVER auto-redirects to /admin/dashboard
- * 5. Loading state shows skeleton (not admin UI) while verifying
- * 
- * PROTECTED ROUTES:
- * - /admin/dashboard
- * - /admin/users
- * - /admin/hikes
- * - /admin/guides
- * - /admin/analytics
- * - /admin/audit
- * - /admin/role-requests
- * - /admin/deleted
- * 
- * AUTHENTICATION FLOW:
- * ┌─ User attempts to access protected route (e.g., /admin/dashboard)
- * │
- * ├─ 1. AdminRoute mounts and waits for Firebase auth to initialize
- * │
- * ├─ 2. Calls backend API: GET /me
- * │     │
- * │     ├─ Returns 401 (not authenticated)
- * │     │  └─ ❌ Redirect to /admin/access
- * │     │
- * │     ├─ Returns 200 with role !== 'admin'
- * │     │  └─ ❌ Redirect to /admin/access
- * │     │
- * │     └─ Returns 200 with role === 'admin'
- * │        └─ ✅ Allow access (render children)
- * │
- * └─ 3. Admin can now access the protected route
- * 
- * IMPORTANT:
- * - This guard does NOT manage the redirect FROM /admin TO /admin/access
- *   (that's handled in main.jsx route config)
- * - This guard ONLY protects individual admin pages
- * - Failed auth checks ALWAYS redirect to /admin/access (never dashboard)
- * - Token refresh is attempted once if initial verification fails
- * 
- * MIDDLEWARE BEHAVIOR:
- * - Shows LoadingSkeleton while checking (not admin UI)
- * - Redirects non-admins immediately after verification
- * - Preserves attempted location in redirect state
- * - Never exposes admin UI to non-admins (not even flash)
- * 
- * ═══════════════════════════════════════════════════════════════════════════
- */
 
 export default function AdminRoute({ children }) {
   const [role, setRole] = useState(null); // null = checking, 'admin' = allow, anything else = block
