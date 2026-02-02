@@ -14,7 +14,7 @@ try { usersRepo = require('../../users/repository'); } catch (e) { console.warn(
 let bookingsRepo;
 try { bookingsRepo = require('../../bookings/repository'); } catch (e) { console.warn('[hikes/controller] bookings repo missing:', e.message); }
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 const router = Router();
 
 /* ------------------- ROUTE FILE HELPERS ------------------- */

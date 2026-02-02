@@ -1,0 +1,11 @@
+/* Admin layout: green header and content area */
+.admin-shell { min-height: 100vh; display:flex; flex-direction:column; }
+.admin-header { background: linear-gradient(90deg,#2d6a4f,#1f513a); color: #fff; padding: 18px 22px; display:flex; align-items:center; justify-content:space-between; }
+.admin-brand a{ color:#fff; font-weight:700; text-decoration:none }
+.admin-actions a{ color:#fff; text-decoration:none; margin-left:12px }
+.admin-main { display:flex; gap:20px; padding: 20px; }
+.admin-content { flex:1; background: #f8faf8; padding: 18px; border-radius: 12px; box-shadow: 0 6px 18px rgba(2,6,23,0.04); }
+
+.admin-tabs { margin-bottom: 14px; }
+.admin-tabs button { margin-right:8px; padding:8px 12px; border-radius:20px; border:1px solid transparent; background:#fff; }
+.admin-tabs button.active { background:#e6f6ec; color:#15452b; border-color:#dbeede }

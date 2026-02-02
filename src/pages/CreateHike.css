@@ -1,0 +1,120 @@
+.create-hike-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  padding: 3rem 2rem;
+}
+
+.create-hike-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.create-hike-header {
+  margin-bottom: 2rem;
+}
+
+.create-hike-header h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #111827;
+}
+
+.create-hike-header p {
+  margin-top: 0.5rem;
+  font-size: 1.125rem;
+  color: #6b7280;
+}
+
+.form-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.section-card {
+  background: white;
+  border: 1px solid #f3f4f6;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 1.5rem;
+}
+
+.action-buttons {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.create-hike-page .btn-cancel {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #374151;
+  background: white;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.create-hike-page .btn-cancel:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.create-hike-page .btn-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.create-hike-page .btn-cancel:disabled:hover {
+  background: white;
+}
+
+.create-hike-page .btn-primary {
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  background: #10b981;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.create-hike-page .btn-primary:hover:not(:disabled) {
+  background: #047857;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.create-hike-page .btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.create-hike-page .btn-primary:disabled:hover {
+  background: #10b981;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.create-hike-page .alert-error {
+  background: #fff3f2;
+  border: 1px solid #ffd2cf;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #9b2c2c;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}

@@ -1,0 +1,484 @@
+/* Map Route Component Styles */
+
+.map-route-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Header */
+.map-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.map-route-title-small {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.map-header-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Elegant route suggestion - minimalist design */
+.route-elegant-suggestion {
+  margin: 0.75rem 0;
+  padding: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.route-elegant-suggestion-icon {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  opacity: 0.7;
+}
+
+.route-elegant-suggestion-text {
+  color: #6b7280;
+}
+
+/* Mode Toggle */
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 0.25rem;
+  background: #f3f4f6;
+  border-radius: 0.5rem;
+  width: fit-content;
+}
+
+.mode-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-toggle-btn:hover {
+  color: #111827;
+}
+
+.mode-toggle-btn.active {
+  background: white;
+  color: #047857;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.mode-toggle-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Map Controls Row */
+.map-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.map-controls-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.stats-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #111827;
+}
+
+.stats-icon {
+  color: #10b981;
+  width: 16px;
+  height: 16px;
+}
+
+.stats-badge span {
+  font-weight: 500;
+}
+
+.map-controls-right {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.control-btn {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background: white;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.control-btn:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.control-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Map Canvas */
+.map-canvas {
+  position: relative;
+  width: 100%;
+  height: 384px;
+  border-radius: 0.75rem;
+  border: 2px dashed #d1d5db;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  background: #f3f4f6;
+  z-index: 1;
+}
+
+
+.leaflet-map-container {
+  height: 100% !important;
+  width: 100% !important;
+  border-radius: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.leaflet-container {
+  cursor: crosshair;
+  font-family: inherit;
+  position: relative;
+  z-index: 1;
+}
+
+.leaflet-container:focus {
+  outline: none;
+}
+
+/* Ensure Leaflet controls are below header (z-index: 1000) when scrolling */
+/* Global selectors to catch all Leaflet controls */
+.leaflet-control-zoom {
+  z-index: 999 !important;
+}
+
+.leaflet-control-attribution {
+  z-index: 999 !important;
+}
+
+/* Target all Leaflet controls and panes to ensure they're below header */
+.leaflet-control {
+  z-index: 999 !important;
+}
+
+.leaflet-top {
+  z-index: 999 !important;
+}
+
+.leaflet-bottom {
+  z-index: 999 !important;
+}
+
+.leaflet-pane {
+  z-index: 1 !important;
+}
+
+.leaflet-map-pane {
+  z-index: 1 !important;
+}
+
+/* Also target within map canvas for specificity */
+.map-canvas .leaflet-control-zoom,
+.map-canvas .leaflet-control-attribution,
+.map-canvas .leaflet-control,
+.map-canvas .leaflet-top,
+.map-canvas .leaflet-bottom {
+  z-index: 999 !important;
+}
+
+/* Empty State */
+.map-empty-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  color: #d1d5db;
+  margin: 0 auto 0.5rem;
+  display: block;
+}
+
+.empty-text {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* Destinations Panel */
+.destinations-panel {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+}
+
+.destinations-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.destinations-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: #111827;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.destinations-title-icon {
+  color: #10b981;
+  width: 16px;
+  height: 16px;
+}
+
+.destinations-hint {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.destinations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.destination-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  cursor: move;
+  transition: all 0.2s;
+}
+
+.destination-row:hover {
+  border-color: #86efac;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.destination-row.dragging {
+  opacity: 0.5;
+}
+
+.drag-handle {
+  color: #9ca3af;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.destination-number-badge {
+  width: 24px;
+  height: 24px;
+  background: #10b981;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.destination-name-input {
+  flex: 1;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #111827;
+  background: white;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.destination-name-input:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #10b981;
+  transition: all 150ms;
+}
+
+.destination-coords {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-family: monospace;
+  white-space: nowrap;
+}
+
+.destination-delete-btn {
+  padding: 0.375rem;
+  color: #dc2626;
+  background: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.destination-delete-btn:hover {
+  background: #fef2f2;
+}
+
+.destination-delete-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+
+.summary-value {
+  font-weight: 500;
+  color: #111827;
+}
+
+/* Error Messages */
+.map-errors {
+  margin-top: 0.75rem;
+}
+
+.map-route-container .map-errors .field-error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+}
+
+/* Responsive Design - Mobile and Tablet */
+@media (max-width: 768px) {
+  /* Issue 1: Center mode toggle tabs on smaller screens */
+  .mode-toggle {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .mode-toggle-btn {
+    flex: 0 1 auto;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8125rem;
+  }
+
+  /* Issue 2: Fix destination input field overflow on mobile */
+  .destination-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 0.5rem;
+  }
+
+  .destination-name-input {
+    flex: 1 1 100%;
+    min-width: 0;
+    padding: 0.375rem 0.625rem;
+    font-size: 0.8125rem;
+  }
+
+  .destination-coords {
+    flex: 1 1 auto;
+    font-size: 0.7rem;
+  }
+
+  .destination-delete-btn {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small screens - further optimize spacing */
+  .mode-toggle {
+    gap: 0.5rem;
+    padding: 0.25rem;
+  }
+
+  .mode-toggle-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .destination-row {
+    gap: 0.375rem;
+    padding: 0.5rem 0.375rem;
+  }
+
+  .destination-name-input {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .destination-coords {
+    font-size: 0.65rem;
+  }
+
+  .drag-handle,
+  .destination-number-badge {
+    width: 20px;
+    height: 20px;
+  }
+
+  .destination-number-badge {
+    font-size: 0.65rem;
+  }
+}

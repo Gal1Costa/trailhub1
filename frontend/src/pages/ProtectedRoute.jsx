@@ -58,6 +58,11 @@ export default function ProtectedRoute({ children }) {
     return <div style={{ padding: 40, textAlign: 'center' }}>Loading...</div>;
   }
 
+  // If admin login is blocked on Explore, render children (e.g. Explore page with error)
+  if (role === 'admin' && localStorage.getItem('blockAdminExploreLogin')) {
+    return children;
+  }
+
   // If user is admin, redirect to admin dashboard
   if (role === 'admin') {
     return <Navigate to="/admin/dashboard" replace />;
