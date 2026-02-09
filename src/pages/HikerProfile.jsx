@@ -69,7 +69,8 @@ export default function HikerProfile() {
         return;
       }
 
-      console.log('[HikerProfile] Loaded profile:', { id: profile.id, email: profile.email, name: profile.name, role: profile.role });
+      console.log('[HikerProfile] Loaded profile:', { id: profile.id, email: profile.email, name: profile.name, role: profile.role, isPublicView });
+      console.log('[HikerProfile] Full profile object:', profile);
       setMe(profile);
 
       const now = new Date();
@@ -234,6 +235,11 @@ export default function HikerProfile() {
             {/* delete moved to Danger Zone section below for owner-only visibility */}
           </div>
           <h1 className="profile-name">{me.name || me.email || "User"}</h1>
+          {!isPublicView && me.email && (
+            <p className="profile-email" style={{ color: "#666", fontSize: "14px", marginTop: "4px" }}>
+              {me.email}
+            </p>
+          )}
           <p className="profile-role">Hiker</p>
           {me.hikerProfile?.location && (
             <p className="profile-location">

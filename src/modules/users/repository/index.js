@@ -236,7 +236,7 @@ async function getCurrentUserProfile(firebaseUid, userInfo = null) {
 }
 
 async function updateHikerProfile(userId, data) {
-  const { name, bio, location, displayName, fitnessLevel } = data;
+  const { name, bio, location, displayName } = data;
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -258,7 +258,6 @@ async function updateHikerProfile(userId, data) {
   if (bio !== undefined) updateData.bio = bio || null;
   if (location !== undefined) updateData.location = location || null;
   if (displayName !== undefined) updateData.displayName = displayName || null;
-  if (fitnessLevel !== undefined) updateData.fitnessLevel = fitnessLevel || null;
 
   return prisma.hikerProfile.upsert({
     where: { userId },
@@ -268,7 +267,6 @@ async function updateHikerProfile(userId, data) {
       bio: bio || null,
       location: location || null,
       displayName: displayName || name || null,
-      fitnessLevel: fitnessLevel || null,
     },
   });
 }

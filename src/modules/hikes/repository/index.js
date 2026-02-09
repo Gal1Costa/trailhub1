@@ -89,12 +89,31 @@ if (difficulty) {
   console.log("[listHikes] Difficulty conditions:", difficultyConditions);
 }
 
-    // Price range
-    if (priceFrom !== undefined && priceFrom !== null && !isNaN(priceFrom)) {
-      and.push({ price: { gte: priceFrom } });
-    }
-    if (priceTo !== undefined && priceTo !== null && !isNaN(priceTo)) {
-      and.push({ price: { lte: priceTo } });
+    // Price range (include free hikes when range includes 0)
+    const minPrice = priceFrom !== undefined && priceFrom !== null && priceFrom !== ""
+      ? Number(priceFrom)
+      : undefined;
+    const maxPrice = priceTo !== undefined && priceTo !== null && priceTo !== ""
+      ? Number(priceTo)
+      : undefined;
+
+    const hasMinPrice = Number.isFinite(minPrice);
+    const hasMaxPrice = Number.isFinite(maxPrice);
+
+    if (hasMinPrice || hasMaxPrice) {
+      const rangeConditions = [];
+      if (hasMinPrice) rangeConditions.push({ price: { gte: minPrice } });
+      if (hasMaxPrice) rangeConditions.push({ price: { lte: maxPrice } });
+
+      const includesFree =
+        (!hasMinPrice || minPrice <= 0) &&
+        (!hasMaxPrice || maxPrice >= 0);
+
+      if (includesFree) {
+        and.push({ OR: [{ AND: rangeConditions }, { price: null }] });
+      } else {
+        and.push(...rangeConditions);
+      }
     }
 
     // Date range (hike.date) - validate dates

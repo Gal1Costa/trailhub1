@@ -177,7 +177,8 @@ export default function GuideProfile() {
 
       console.log('[GuideProfile] Loaded profile:', { 
         id: profile.id, 
-        email: profile.email, 
+        email: profile.email,
+        isPublicView, 
         name: profile.name, 
         role: profile.role,
         guideId: profile.guide?.id,
@@ -377,6 +378,11 @@ export default function GuideProfile() {
             )}
           </div>
           <h1 className="profile-name">{me.name || me.email || "User"}</h1>
+          {!isPublicView && me.email && (
+            <p className="profile-email" style={{ color: "#666", fontSize: "14px", marginTop: "4px" }}>
+              {me.email}
+            </p>
+          )}
           <p className="profile-role">Guide</p>
           {me.guide?.location && (
             <p className="profile-location">

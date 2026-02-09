@@ -280,7 +280,7 @@ export default function EditProfileModal({ isOpen, onClose, user, onSave, onDele
 
         <form onSubmit={handleSubmit} className="edit-profile-form">
           <div className="form-group">
-            <label htmlFor="name">Name (optional)</label>
+            <label htmlFor="name">Name</label>
             <input
               type="text"
               id="name"
